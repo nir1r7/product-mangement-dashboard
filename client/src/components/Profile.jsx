@@ -40,7 +40,6 @@ function Profile() {
     return (
         <div>
             <h2>User Profile</h2>
-            {console.log(user)}
             <div>
                 <p>Name: {user.name}</p>
                 <p>Email: {user.email}</p>
