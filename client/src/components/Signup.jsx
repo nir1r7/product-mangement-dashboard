@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 function SignUp(props) {
     const [name, setName] = useState('');
@@ -6,13 +6,6 @@ function SignUp(props) {
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('user');
     const [message, setMessage] = useState('');
-
-    useEffect(() => {
-        setName('');
-        setEmail('');
-        setPassword('');
-        setMessage('');
-    }, [props.resetKey]);
 
     const handleSignup = async (e) => {
         e.preventDefault();
