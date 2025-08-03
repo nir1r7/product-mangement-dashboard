@@ -6,19 +6,19 @@ import Login from './components/Login';
 import SignUp from './components/Signup';
 import Profile from './components/Profile';
 import Navbar from './components/Navbar';
-import { getUserRole } from './utils/auth';
-
+import Cart from './components/Cart';
+import { useAuth } from './contexts/AuthContext';
 
 function App() {
-    const token = localStorage.getItem('token'); // Simplified auth check
+    const { token, role } = useAuth();
 
     return (
         <Router>
             <Navbar />
             <Routes>
                 <Route path="/" element={<ProductList />} />
-                <Route path="/dashboard" element={token && getUserRole() === 'admin' ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
-                {/* <Route path="/cart" element={<Cart />} /> */}
+                <Route path="/dashboard" element={token && role === 'admin' ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<SignUp />} />
