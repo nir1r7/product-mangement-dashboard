@@ -199,8 +199,36 @@ export const CartProvider = ({ children }) => {
         }
     };
 
+    const updateCartQuantity = async (productId, newQuantity) => {
+        const updatedCart = cartItems.map(item =>
+            (item.product._id || item._id) === productId
+                ? { ...item, quantity: newQuantity }
+                : item
+        );
+
+        setCartItems(updatedCart);
+
+        if (token) {
+            try {
+                await fetch(`http://localhost:5000/api/cart/${productId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ quantity: newQuantity }),
+                });
+            } catch (err) {
+                console.error('Failed to update backend cart quantity:', err);
+            }
+        } else {
+            saveLocalCart(updatedCart);
+        }
+    };
+
+
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart }}>
+        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, updateCartQuantity }}>
             {children}
         </CartContext.Provider>
     );
