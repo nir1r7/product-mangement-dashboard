@@ -8,13 +8,21 @@ import Profile from './components/Profile';
 import Navbar from './components/Navbar';
 import Cart from './components/Cart';
 import { useAuth } from './contexts/AuthContext';
+import { useCart } from './contexts/CartContext';
 
 function App() {
     const { token, role } = useAuth();
+    const { clearCart } = useCart();
+    const { logout } = useAuth();
+
+    const handleGlobalLogout = () => {
+        clearCart();
+        logout();
+    };
 
     return (
         <Router>
-            <Navbar />
+            <Navbar onLogout={handleGlobalLogout} />
             <Routes>
                 <Route path="/" element={<ProductList />} />
                 <Route path="/dashboard" element={token && role === 'admin' ? <ProductDashboard token={token} /> : <Navigate to="/" />} />

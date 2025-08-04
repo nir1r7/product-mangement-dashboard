@@ -11,10 +11,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// anyone can view products
 router.get('/', getProducts);
-
-// admin-only routes
 router.post('/', protect, isAdmin, upload.single('image'), createProduct);
 router.put('/:id', protect, isAdmin, upload.single('image'), updateProduct);
 router.delete('/:id', protect, isAdmin, deleteProduct);

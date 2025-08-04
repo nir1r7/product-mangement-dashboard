@@ -49,7 +49,6 @@ const updateProduct = async (req, res) => {
         product.category = category ?? product.category;
         product.stock = stock ?? product.stock;
 
-        // If a new image was uploaded
         if (req.file) {
             product.imageUrl = `/uploads/${req.file.filename}`;
         }

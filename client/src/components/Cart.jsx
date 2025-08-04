@@ -13,15 +13,17 @@ function Cart() {
             <h2>Your Cart</h2>
             <ul>
                 {cartItems.map(item => (
-                    <li key={item._id}>
-                        <h3>{item.name}</h3>
-                        <p>Price: ${item.price}</p>
-                        <button onClick={() => removeFromCart(item._id)}>Remove</button>
+                    <li key={item.product._id}>
+                        <h3>{item.product.name}</h3>
+                        <p>Price: ${item.product.price}</p>
+                        <p>Quantity: {item.quantity}</p>
+                        <button onClick={() => removeFromCart(item.product._id)}>Remove</button>
                     </li>
                 ))}
             </ul>
         </div>
     );
 }
+
 
 export default Cart;
