@@ -162,60 +162,60 @@ function ProductDashboard({ token }) {
                     </tr>
                 </thead>
                 {/* Add New Product Row */}
-                <tr>
-                    <td>
-                        <input type="file" onChange={handleFileChange} />
-                    </td>
-                    <td>
-                        <input
-                            type="text"
-                            name="name"
-                            placeholder="Name"
-                            value={newProduct.name}
-                            onChange={handleInputChange}
-                        />
-                    </td>
-                    <td>
-                        <input
-                            type="text"
-                            name="description"
-                            placeholder="Description"
-                            value={newProduct.description}
-                            onChange={handleInputChange}
-                        />
-                    </td>
-                    <td>
-                        <input
-                            type="number"
-                            name="price"
-                            placeholder="Price"
-                            value={newProduct.price}
-                            onChange={handleInputChange}
-                        />
-                    </td>
-                    <td>
-                        <input
-                            type="text"
-                            name="category"
-                            placeholder="Category"
-                            value={newProduct.category}
-                            onChange={handleInputChange}
-                        />
-                    </td>
-                    <td>
-                        <input
-                            type="number"
-                            name="stock"
-                            placeholder="Stock"
-                            value={newProduct.stock}
-                            onChange={handleInputChange}
-                        />
-                    </td>
-                    <td>
-                        <button onClick={handleAddProduct}>Add</button>
-                    </td>
-                </tr>
                 <tbody>
+                    <tr>
+                        <td>
+                            <input type="file" onChange={handleFileChange} />
+                        </td>
+                        <td>
+                            <input
+                                type="text"
+                                name="name"
+                                placeholder="Name"
+                                value={newProduct.name}
+                                onChange={handleInputChange}
+                            />
+                        </td>
+                        <td>
+                            <input
+                                type="text"
+                                name="description"
+                                placeholder="Description"
+                                value={newProduct.description}
+                                onChange={handleInputChange}
+                            />
+                        </td>
+                        <td>
+                            <input
+                                type="number"
+                                name="price"
+                                placeholder="Price"
+                                value={newProduct.price}
+                                onChange={handleInputChange}
+                            />
+                        </td>
+                        <td>
+                            <input
+                                type="text"
+                                name="category"
+                                placeholder="Category"
+                                value={newProduct.category}
+                                onChange={handleInputChange}
+                            />
+                        </td>
+                        <td>
+                            <input
+                                type="number"
+                                name="stock"
+                                placeholder="Stock"
+                                value={newProduct.stock}
+                                onChange={handleInputChange}
+                            />
+                        </td>
+                        <td>
+                            <button onClick={handleAddProduct}>Add</button>
+                        </td>
+                    </tr>
                     {products.map(product => (
                         <tr key={product._id}>
                             <td>
