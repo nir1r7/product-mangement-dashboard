@@ -20,21 +20,39 @@ const addToCart = async (req, res) => {
     }
 
     try {
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        if (product.stock === 0) {
+            return res.status(400).json({ message: `${product.name} is out of stock` });
+        }
+
         const user = await User.findById(req.user.id);
 
         const cartItemIndex = user.cart.findIndex(item => item.product.toString() === productId);
 
         if (cartItemIndex !== -1) {
-            user.cart[cartItemIndex].quantity += quantity;
+            const newQuantity = user.cart[cartItemIndex].quantity + quantity;
+            if (newQuantity > product.stock) {
+                return res.status(400).json({ message: `Cannot add ${quantity} more. Only ${product.stock - user.cart[cartItemIndex].quantity} left in stock.` });
+            }
+            user.cart[cartItemIndex].quantity = newQuantity;
         } else {
+            if (quantity > product.stock) {
+                return res.status(400).json({ message: `Cannot add ${quantity}. Only ${product.stock} in stock.` });
+            }
             user.cart.push({ product: productId, quantity });
         }
 
         await user.save();
+
         const updatedUser = await User.findById(req.user.id).populate('cart.product');
         res.json(updatedUser.cart);
 
     } catch (error) {
+        console.error('Add to Cart Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

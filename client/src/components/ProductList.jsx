@@ -42,7 +42,12 @@ function ProductList() {
                                 width="100"
                             />
                         )}
-                        <button onClick={() => addToCart(product)}>Add to Cart</button>
+                        <button
+                            onClick={() => addToCart(product)}
+                            disabled={product.stock === 0}
+                        >
+                            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                        </button>
                     </li>
                 ))}
             </ul>
