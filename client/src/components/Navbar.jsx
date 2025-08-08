@@ -16,7 +16,12 @@ function Navbar({ onLogout }) {
                 <li><Link to="/">Shop</Link></li>
                 <li><Link to="/cart">Cart</Link></li>
                 {token && <li><Link to="/profile">Profile</Link></li>}
-                {token && role === 'admin' && <li><Link to="/dashboard">Admin Dashboard</Link></li>}
+                {token && role === 'admin' && 
+                    <div>
+                        <li><Link to="/product-dashboard">Product Dashboard</Link></li>
+                        <li><Link to="/order-dashboard">Order Dashboard</Link></li>
+                    </div>
+                }
                 {!token ? (
                     <>
                         <li><Link to="/login">Login</Link></li>

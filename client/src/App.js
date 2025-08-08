@@ -7,6 +7,7 @@ import SignUp from './components/Signup';
 import Profile from './components/Profile';
 import Navbar from './components/Navbar';
 import Cart from './components/Cart';
+import OrderDashboard from './components/OrderDashboard';
 import { useAuth } from './contexts/AuthContext';
 import { useCart } from './contexts/CartContext';
 
@@ -25,7 +26,8 @@ function App() {
             <Navbar onLogout={handleGlobalLogout} />
             <Routes>
                 <Route path="/" element={<ProductList />} />
-                <Route path="/dashboard" element={token && role === 'admin' ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
+                <Route path="/product-dashboard" element={token && role === 'admin' ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
+                <Route path="/order-dashboard" element={token && role === 'admin' ? <OrderDashboard token={token} /> : <Navigate to="/" />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />
                 <Route path="/login" element={<Login />} />

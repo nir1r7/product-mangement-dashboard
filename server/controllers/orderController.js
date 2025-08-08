@@ -67,4 +67,32 @@ const getUserOrders = async (req, res) => {
     }
 };
 
-module.exports = { placeOrder, getUserOrders };
+// GET /api/orders/admin/orders
+const getAllOrders = async (req, res) => {
+    try {
+        const orders = await Order.find()
+            .populate('user', 'name email')
+            .populate('items.product', 'name price');
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch all orders', error: error.message });
+    }
+};
+
+// PUT /api/orders/admin/orders/:id/status
+const updateStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    try {
+        const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update order status', error: error.message });
+    }
+}
+
+module.exports = { placeOrder, getUserOrders, getAllOrders, updateStatus };

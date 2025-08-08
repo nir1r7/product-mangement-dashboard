@@ -161,7 +161,6 @@ function ProductDashboard({ token }) {
                         <th>Actions</th>
                     </tr>
                 </thead>
-                {/* Add New Product Row */}
                 <tbody>
                     <tr>
                         <td>
