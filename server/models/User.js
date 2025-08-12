@@ -24,7 +24,17 @@ const userSchema = new mongoose.Schema({
             product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
             quantity: { type: Number, default: 1 }
         }
-    ]
+    ],
+    orders: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Order'
+        }
+    ],
+    notes: {
+        type: String,
+        default: ''
+    }
 });
 
 const User = mongoose.model('User', userSchema);

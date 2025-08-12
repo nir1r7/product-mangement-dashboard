@@ -44,7 +44,14 @@ const placeOrder = async (req, res) => {
             totalPrice
         }], { session });
 
-        await User.findByIdAndUpdate(userId, { $set: { cart: [] } }, { session });
+        await User.findByIdAndUpdate(
+            userId,
+            {
+                $set: { cart: [] },
+                $push: { orders: order[0]._id }
+            },
+            { session }
+        );
 
         await session.commitTransaction();
         session.endSession();

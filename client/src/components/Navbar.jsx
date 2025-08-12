@@ -20,6 +20,7 @@ function Navbar({ onLogout }) {
                     <div>
                         <li><Link to="/product-dashboard">Product Dashboard</Link></li>
                         <li><Link to="/order-dashboard">Order Dashboard</Link></li>
+                        <li><Link to="/user-dashboard">User Dashboard</Link></li>
                     </div>
                 }
                 {!token ? (
