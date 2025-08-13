@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import OrderHistory from './OrderHistory';
 
 function UserDashboard({ token }) {
     const [users, setUsers] = useState([]);
@@ -94,50 +95,14 @@ function UserDashboard({ token }) {
                 </tbody>
             </table>
 
-            <table border="1" cellPadding="10" style={{float: 'right'}}>
+            <div  style={{float: 'right'}}>
                 {expandedUserId && orders[expandedUserId] && (
-                    <tbody>
-                        <tr>
-                            <td colSpan="6">
-                                <h4>{users.find(u => u._id === expandedUserId)?.name}'s Orders</h4>
-                                <table border="1" cellPadding="5" style={{ marginTop: '10px' }}>
-                                    <thead>
-                                        <tr>
-                                            <th>Order ID</th>
-                                            <th>Date</th>
-                                            <th>Status</th>
-                                            <th>Items</th>
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {orders[expandedUserId].map(order => (
-                                            <tr key={order._id}>
-                                                <td style={{ fontSize: '12px' }}>{order._id}</td>
-                                                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                                                <td>{order.status}</td>
-                                                <td>
-                                                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                                                        {order.items.map(item => (
-                                                            <li key={item.product._id}>
-                                                                {item.product.name + ' ' || 'Product Unavailable'} 
-                                                                <span style={{ color: '#666' }}>
-                                                                    (x{item.quantity}) - ${(item.product.price * item.quantity).toFixed(2)}
-                                                                </span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </td>
-                                                <td>${order.totalPrice.toFixed(2)}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <OrderHistory 
+                        orderProps={orders[expandedUserId]} 
+                        titleProps={users.find(u => u._id === expandedUserId)?.name + "'s Orders"} 
+                    />
                 )}
-            </table>
+            </div>
         </div>
     );
 }

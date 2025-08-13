@@ -6,6 +6,7 @@ import SignUp from './components/Signup';
 import Profile from './components/Profile';
 import Navbar from './components/Navbar';
 import Cart from './components/Cart';
+import OrderHistory from './components/OrderHistory';
 import ProductDashboard from './components/ProductDashboard';
 import OrderDashboard from './components/OrderDashboard';
 import UserDashboard from './components/UserDashboard';
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/user-dashboard" element={token && role === 'admin' ? <UserDashboard token={token} /> : <Navigate to="/" />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />
+                <Route path="/my-orders" element={<OrderHistory />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<SignUp />} />
             </Routes>
