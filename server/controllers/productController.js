@@ -1,12 +1,56 @@
 const Product = require('../models/Product');
 
 // public access
-// GET /api/products
+// GET /api/products?search=&category=&minPrice=&maxPrice=&page=&limit=&sortBy=&sortOrder=
 const getProducts = async (req, res) => {
     try {
-        const products = await Product.find({});
-        res.json(products);
+        const {
+            search,
+            category,
+            minPrice,
+            maxPrice,
+            page = 1,
+            limit = 10,
+            sortBy = 'createdAt',
+            sortOrder = 'desc'
+        } = req.query;
+
+        let query = {};
+
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (category) {
+            query.category = category;
+        }
+
+        if (minPrice !== '' || maxPrice !== '') {
+            query.price = {};
+            if (minPrice !== '') query.price.$gte = Number(minPrice);
+            if (maxPrice !== '') query.price.$lte = Number(maxPrice);
+        }
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+        const total = await Product.countDocuments(query);
+        const products = await Product.find(query)
+            .sort(sort)
+            .skip(skip)
+            .limit(Number(limit));
+
+        res.json({
+            products,
+            total,
+            page: Number(page),
+            pages: Math.ceil(total / limit)
+        });
     } catch (err) {
+        console.error('Error in getProducts:', err);
         res.status(500).json({ message: 'Server error while fetching products' });
     }
 };
