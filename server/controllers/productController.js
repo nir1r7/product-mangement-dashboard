@@ -28,11 +28,19 @@ const getProducts = async (req, res) => {
             query.category = category;
         }
 
-        if (minPrice !== '' || maxPrice !== '') {
+        if (
+            (minPrice !== undefined && minPrice !== '' && !isNaN(minPrice)) ||
+            (maxPrice !== undefined && maxPrice !== '' && !isNaN(maxPrice))
+        ) {
             query.price = {};
-            if (minPrice !== '') query.price.$gte = Number(minPrice);
-            if (maxPrice !== '') query.price.$lte = Number(maxPrice);
+            if (minPrice !== undefined && minPrice !== '' && !isNaN(minPrice)) {
+                query.price.$gte = Number(minPrice);
+            }
+            if (maxPrice !== undefined && maxPrice !== '' && !isNaN(maxPrice)) {
+                query.price.$lte = Number(maxPrice);
+            }
         }
+
 
         const skip = (Number(page) - 1) * Number(limit);
         const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
