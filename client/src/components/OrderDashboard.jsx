@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import SearchBar from './SearchBar';
 
 function OrderDashboard() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortOption, setSortOption] = useState('mostRecent');
     const [ignoreCancellations, setIgnoreCancellations] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const { token } = useAuth();
-    const statusRank = [
+    const statusRank = React.useMemo(() => [
         'Cancelled',
         'Pending',
         'Paid',
         'Shipped',
         'Delivered',
-    ];
+    ], []);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -39,7 +41,7 @@ function OrderDashboard() {
         fetchOrders();
     }, [token]);
 
-    const sortOrders = (orders, option, ignoreCancel) => {
+    const sortOrders = React.useCallback((orders, option, ignoreCancel) => {
         const sorted = [...orders];
 
         sorted.sort((a, b) => {
@@ -67,7 +69,7 @@ function OrderDashboard() {
         });
 
         return sorted;
-    };
+    }, [statusRank]);
 
     const handleStatusChange = async (orderId, newStatus) => {
         try {
@@ -100,15 +102,29 @@ function OrderDashboard() {
     };
 
 
+    const filteredAndSortedOrders = React.useMemo(() => {
+        const filtered = orders.filter(order => 
+            order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return sortOrders(filtered, sortOption, ignoreCancellations);
+    }, [orders, searchTerm, sortOption, ignoreCancellations, sortOrders]);
+
     if (loading) {
         return <div>Loading orders...</div>;
     }
 
-    const sortedOrders = sortOrders(orders, sortOption, ignoreCancellations);
-
     return (
         <div>
             <h2>Order Dashboard</h2>
+
+            <SearchBar
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                placeholder="Search orders..."
+            />
 
             <label htmlFor="sortOrders">Sort By: </label>
             <select
@@ -149,7 +165,7 @@ function OrderDashboard() {
                     </tr>
                 </thead>
                 <tbody>
-                    {sortedOrders.map(order => (
+                    {filteredAndSortedOrders.map(order => (
                         <tr key={order._id}>
                             <td>{new Date(order.createdAt).toLocaleString()}</td>
                             <td>{order._id}</td>

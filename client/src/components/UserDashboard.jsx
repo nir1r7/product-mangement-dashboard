@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import OrderHistory from './OrderHistory';
+import SearchBar from './SearchBar';
 
 function UserDashboard({ token }) {
     const [users, setUsers] = useState([]);
     const [expandedUserId, setExpandedUserId] = useState(null);
     const [orders, setOrders] = useState({});
     const [notes, setNotes] = useState({});
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetch('http://localhost:5000/api/users', {
@@ -51,9 +53,22 @@ function UserDashboard({ token }) {
         });
     };
 
+    const filteredUsers = users.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user._id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div>
             <h2>User Dashboard</h2>
+
+            <SearchBar
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                placeholder="Search users..."
+            />
+
             <table border="1" cellPadding="10" style={{ float: 'left' }}>
                 <thead>
                 <tr>
@@ -66,7 +81,7 @@ function UserDashboard({ token }) {
                 </tr>
                 </thead>
                 <tbody>
-                {users.map(user => (
+                {filteredUsers.map(user => (
                     <React.Fragment key={user._id}>
                     <tr>
                         <td>{user._id}</td>

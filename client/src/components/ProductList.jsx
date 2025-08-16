@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { CartContext } from '../contexts/CartContext';
 import { Range } from 'react-range';
+import SearchBar from './SearchBar';
 
 export default function ProductList() {
     const [products, setProducts] = useState([]);
@@ -64,28 +65,21 @@ export default function ProductList() {
         return ((Math.log(value) - minv) / scale + minp);
     };
 
-    return (
-        <div>
-            <h1>Product List</h1>
+    const additionalFilters = (
+        <>
+            <select 
+                value={category} 
+                onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+            >
+                <option value="">All Categories</option>
+                <option value="People">People</option>
+                <option value="Edibles">Edibles</option>
+                <option value="Decoration">Decoration</option>
+                <option value="Vehicles">Vehicles</option>
+            </select>
 
-            <div style={{ marginBottom: '20px' }}>
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    value={search}
-                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                />
-
-                <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }}>
-                    <option value="">All Categories</option>
-                    <option value="People">People</option>
-                    <option value="Edibles">Edibles</option>
-                    <option value="Decoration">Decoration</option>
-                    <option value="Vehicles">Vehicles</option>
-                </select>
-
-                <div style={{ margin: '20px 0', width: '300px' }}>
-                    <Range
+            <div style={{ margin: '20px 0', width: '300px' }}>
+                <Range
                         step={1}
                         min={0}
                         max={100000}
@@ -127,11 +121,23 @@ export default function ProductList() {
                             );
                         }}
                     />
-                    <div>
-                        Price: ${Math.round(priceRange[0])} - ${Math.round(priceRange[1])}
-                    </div>
+                <div>
+                    Price: ${Math.round(priceRange[0])} - ${Math.round(priceRange[1])}
                 </div>
             </div>
+        </>
+    );
+
+    return (
+        <div>
+            <h1>Product List</h1>
+
+            <SearchBar
+                searchTerm={search}
+                onSearchChange={(value) => { setSearch(value); setPage(1); }}
+                placeholder="Search products..."
+                additionalFilters={additionalFilters}
+            />
 
             <ul>
                 {products.map(product => (
