@@ -10,14 +10,19 @@ const placeOrder = async (req, res) => {
 
     try {
         const userId = req.user.id;
-        const cartItems = req.body.items;
+        const { items: cartItems, shippingAddress, paymentMethod = 'COD' } = req.body;
 
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: 'Cart is empty' });
         }
 
-        let totalPrice = 0;
+        const requiredFields = ['fullName','street','city','province','postalCode','country'];
+        const missing = requiredFields.filter(f => !shippingAddress || !shippingAddress[f]);
+        if (missing.length > 0) {
+            return res.status(400).json({ message: `Missing shipping fields: ${missing.join(', ')}` });
+        }
 
+        let totalPrice = 0;
         const productIds = cartItems.map(item => item.product);
         const products = await Product.find({ _id: { $in: productIds } }).session(session);
 
@@ -41,7 +46,11 @@ const placeOrder = async (req, res) => {
         const order = await Order.create([{
             user: userId,
             items: cartItems,
-            totalPrice
+            totalPrice,
+            shippingAddress,
+            paymentMethod,
+            paymentStatus: 'Paid',
+            status: 'Paid'
         }], { session });
 
         await User.findByIdAndUpdate(
@@ -56,7 +65,11 @@ const placeOrder = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        res.status(201).json(order[0]);
+        const populatedOrder = await Order.findById(order[0]._id)
+        .populate('items.product', 'name price')
+        .populate('user', 'name email');
+
+        res.status(201).json(populatedOrder);
     } catch (error) {
         await session.abortTransaction();
         session.endSession();
@@ -64,7 +77,6 @@ const placeOrder = async (req, res) => {
     }
 };
 
-// GET /api/orders
 const getUserOrders = async (req, res) => {
     try {
         const orders = await Order.find({ user: req.user.id }).populate('items.product');
@@ -74,19 +86,17 @@ const getUserOrders = async (req, res) => {
     }
 };
 
-// GET /api/orders/admin/orders
 const getAllOrders = async (req, res) => {
     try {
         const orders = await Order.find()
-            .populate('user', 'name email')
-            .populate('items.product', 'name price');
+        .populate('user', 'name email')
+        .populate('items.product', 'name price');
         res.json(orders);
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch all orders', error: error.message });
     }
 };
 
-// PUT /api/orders/admin/orders/:id/status
 const updateStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
@@ -94,12 +104,12 @@ const updateStatus = async (req, res) => {
     try {
         const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
         if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
+        return res.status(404).json({ message: 'Order not found' });
         }
         res.json(order);
     } catch (error) {
         res.status(500).json({ message: 'Failed to update order status', error: error.message });
     }
-}
+};
 
 module.exports = { placeOrder, getUserOrders, getAllOrders, updateStatus };

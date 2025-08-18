@@ -10,6 +10,7 @@ import OrderHistory from './components/OrderHistory';
 import ProductDashboard from './components/ProductDashboard';
 import OrderDashboard from './components/OrderDashboard';
 import UserDashboard from './components/UserDashboard';
+import CheckoutPage from './components/CheckoutPage';
 
 import { useAuth } from './contexts/AuthContext';
 import { useCart } from './contexts/CartContext';
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/order-dashboard" element={token && role === 'admin' ? <OrderDashboard token={token} /> : <Navigate to="/" />} />
                 <Route path="/user-dashboard" element={token && role === 'admin' ? <UserDashboard token={token} /> : <Navigate to="/" />} />
                 <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={token ? <CheckoutPage /> : <Navigate to="/login" />} />
                 <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />
                 <Route path="/my-orders" element={<OrderHistory />} />
                 <Route path="/login" element={<Login />} />
