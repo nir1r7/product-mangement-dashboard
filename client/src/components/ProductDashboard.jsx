@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import SearchBar from './SearchBar';
 
 function ProductDashboard({ token }) {
     const [products, setProducts] = useState([]);
@@ -14,6 +15,7 @@ function ProductDashboard({ token }) {
         image: null
     });
     const [message, setMessage] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchProducts();
@@ -22,11 +24,15 @@ function ProductDashboard({ token }) {
     const fetchProducts = async () => {
         try {
             const response = await fetch('http://localhost:5000/api/products');
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
+            }
             const data = await response.json();
             setProducts(data.products || []);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching products:', error);
+            setMessage('Error fetching products.');
             setLoading(false);
         }
     };
@@ -61,7 +67,7 @@ function ProductDashboard({ token }) {
 
             if (response.ok) {
                 const addedProduct = await response.json();
-                setProducts([...products, addedProduct]);
+                setProducts(prev => [...prev, addedProduct]);
                 setNewProduct({
                     name: '',
                     price: '',
@@ -93,7 +99,7 @@ function ProductDashboard({ token }) {
             });
 
             if (response.ok) {
-                setProducts(products.filter(p => p._id !== id));
+                setProducts(prev => prev.filter(p => p._id !== id));
                 setMessage('Product deleted successfully.');
             } else {
                 setMessage('Failed to delete product.');
@@ -127,7 +133,7 @@ function ProductDashboard({ token }) {
 
             if (response.ok) {
                 const updatedProduct = await response.json();
-                setProducts(products.map(p => p._id === id ? updatedProduct : p));
+                setProducts(prev => prev.map(p => p._id === id ? updatedProduct : p));
                 setMessage('Product updated successfully.');
                 setEditingRowId(null);
             } else {
@@ -140,6 +146,23 @@ function ProductDashboard({ token }) {
         }
     };
 
+    const filteredProducts = useMemo(() => {
+        const term = (searchTerm || '').trim().toLowerCase();
+        if (!term) return products;
+
+        return products.filter((p) => {
+            const fields = [
+                p.name,
+                p.description,
+                p.category,
+                String(p.price ?? ''),
+                String(p.stock ?? '')
+            ];
+            return fields.some(f =>
+                String(f || '').toLowerCase().includes(term)
+            );
+        });
+    }, [products, searchTerm]);
 
     if (loading) {
         return <div>Loading products...</div>;
@@ -148,19 +171,30 @@ function ProductDashboard({ token }) {
     return (
         <div>
             <h2>Product Management</h2>
+
+            <div style={{ marginBottom: '12px', maxWidth: 480 }}>
+                <SearchBar
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    placeholder="Search by name, description, category, price…"
+                />
+            </div>
+
             {message && <p>{message}</p>}
-            <table border="1" cellPadding="10">
+
+            <table border="1" cellPadding="10" width="100%">
                 <thead>
                     <tr>
                         <th>Image</th>
-                        <th>Name</th>
+                        <th style={{ minWidth: 180 }}>Name</th>
                         <th>Description</th>
-                        <th>Price</th>
-                        <th>Category</th>
-                        <th>Stock</th>
+                        <th style={{ minWidth: 100 }}>Price</th>
+                        <th style={{ minWidth: 140 }}>Category</th>
+                        <th style={{ minWidth: 90 }}>Stock</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     <tr>
                         <td>
@@ -215,38 +249,84 @@ function ProductDashboard({ token }) {
                             <button onClick={handleAddProduct}>Add</button>
                         </td>
                     </tr>
-                    {products.map(product => (
+
+                    {filteredProducts.map(product => (
                         <tr key={product._id}>
                             <td>
                                 {product.imageUrl && (
-                                    <img src={`http://localhost:5000${product.imageUrl}`} alt={product.name} width="50" />
+                                    <img
+                                        src={`http://localhost:5000${product.imageUrl}`}
+                                        alt={product.name}
+                                        width="50"
+                                    />
                                 )}
                             </td>
+
                             <td>
                                 {editingRowId === product._id ? (
-                                    <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} />
-                                ) : product.name}
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={editFormData.name}
+                                        onChange={handleEditChange}
+                                    />
+                                ) : (
+                                    product.name
+                                )}
                             </td>
+
                             <td>
                                 {editingRowId === product._id ? (
-                                    <input type="text" name="description" value={editFormData.description} onChange={handleEditChange} />
-                                ) : product.description}
+                                    <input
+                                        type="text"
+                                        name="description"
+                                        value={editFormData.description}
+                                        onChange={handleEditChange}
+                                    />
+                                ) : (
+                                    product.description
+                                )}
                             </td>
+
                             <td>
                                 {editingRowId === product._id ? (
-                                    <input type="number" name="price" value={editFormData.price} onChange={handleEditChange} />
-                                ) : `$${product.price}`}
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        value={editFormData.price}
+                                        onChange={handleEditChange}
+                                    />
+                                ) : (
+                                    `$${product.price}`
+                                )}
                             </td>
+
                             <td>
                                 {editingRowId === product._id ? (
-                                    <input type="text" name="category" value={editFormData.category} onChange={handleEditChange} />
-                                ) : product.category}
+                                    <input
+                                        type="text"
+                                        name="category"
+                                        value={editFormData.category}
+                                        onChange={handleEditChange}
+                                    />
+                                ) : (
+                                    product.category
+                                )}
                             </td>
+
                             <td>
                                 {editingRowId === product._id ? (
-                                    <input type="number" name="stock" value={editFormData.stock} onChange={handleEditChange} />
-                                ) : product.stock}
+                                    <input
+                                        type="number"
+                                        name="stock"
+                                        value={editFormData.stock}
+                                        onChange={handleEditChange}
+                                    />
+                                ) : (
+                                    product.stock
+                                )}
                             </td>
+
                             <td>
                                 {editingRowId === product._id ? (
                                     <>
@@ -262,6 +342,16 @@ function ProductDashboard({ token }) {
                             </td>
                         </tr>
                     ))}
+
+                    {!filteredProducts.length && (
+                        <tr>
+                            <td colSpan="7" style={{ textAlign: 'center', fontStyle: 'italic' }}>
+                                {products.length
+                                    ? 'No products match your search.'
+                                    : 'No products in the catalog yet.'}
+                            </td>
+                        </tr>
+                    )}
                 </tbody>
             </table>
         </div>
