@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProductList from './components/ProductList';
+import ProductDetail from './components/ProductDetail';
 import Login from './components/Login';
 import SignUp from './components/Signup';
 import Profile from './components/Profile';
@@ -29,7 +30,9 @@ function App() {
         <Router>
             <Navbar onLogout={handleGlobalLogout} />
             <Routes>
-                <Route path="/" element={<ProductList />} />
+                <Route path="/" element={<Navigate to="/products" />} />
+                <Route path="/products" element={<ProductList />} />
+                <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/product-dashboard" element={token && role === 'admin' ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
                 <Route path="/order-dashboard" element={token && role === 'admin' ? <OrderDashboard token={token} /> : <Navigate to="/" />} />
                 <Route path="/user-dashboard" element={token && role === 'admin' ? <UserDashboard token={token} /> : <Navigate to="/" />} />

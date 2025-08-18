@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { protect, isAdmin } = require('../middleware/authMiddleware');
-const { getProducts, createProduct, updateProduct, deleteProduct} = require('../controllers/productController');
+const { getProducts, getProductById, createProduct, updateProduct, deleteProduct} = require('../controllers/productController');
 
 // setup for image uploads
 const storage = multer.diskStorage({
@@ -12,6 +12,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.get('/', getProducts);
+router.get('/:id', getProductById);
 router.post('/', protect, isAdmin, upload.single('image'), createProduct);
 router.put('/:id', protect, isAdmin, upload.single('image'), updateProduct);
 router.delete('/:id', protect, isAdmin, deleteProduct);
