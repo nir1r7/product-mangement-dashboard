@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import StarRating from './StarRating';
 
 const cardStyles = {
     container: {
@@ -44,8 +45,17 @@ export default function ProductCard({ product }) {
                         </div>
                     )}
                 </div>
-                <h3 style={cardStyles.name}>{product.name}</h3>
-                <div style={cardStyles.price}>${Number(product.price).toFixed(2)}</div>
-            </Link>
-        );
-}
+                                        <h3 style={cardStyles.name}>{product.name}</h3>
+                        <div style={cardStyles.price}>${Number(product.price).toFixed(2)}</div>
+                        
+                        {product.reviewStats && product.reviewStats.totalReviews > 0 && (
+                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <StarRating rating={product.reviewStats.averageRating} readonly size="small" />
+                                <span style={{ fontSize: '12px', color: '#666' }}>
+                                    ({product.reviewStats.totalReviews})
+                                </span>
+                            </div>
+                        )}
+                    </Link>
+                );
+            }

@@ -6,7 +6,18 @@ const productSchema = new mongoose.Schema({
     description: { type: String, required: true },
     category: { type: String, required: true },
     stock: { type: Number, required: true },
-    images: { type: [String], default: [] }
+    images: { type: [String], default: [] },
+    reviewStats: {
+        averageRating: { type: Number, default: 0 },
+        totalReviews: { type: Number, default: 0 },
+        ratingDistribution: {
+            1: { type: Number, default: 0 },
+            2: { type: Number, default: 0 },
+            3: { type: Number, default: 0 },
+            4: { type: Number, default: 0 },
+            5: { type: Number, default: 0 }
+        }
+    }
 }, { timestamps: true });
 
 const Product = mongoose.model('Product', productSchema);
