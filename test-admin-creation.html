@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Admin User</title>
+</head>
+<body>
+    <h1>Create Admin User</h1>
+    
+    <div>
+        <h2>Create Admin User</h2>
+        <button onclick="createAdminUser()">Create Admin User</button>
+    </div>
+    
+    <div>
+        <h2>Test Admin Login</h2>
+        <button onclick="testAdminLogin()">Test Admin Login</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+
+        async function createAdminUser() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        name: 'Admin User', 
+                        email: 'admin@example.com', 
+                        password: 'admin123',
+                        role: 'admin'
+                    }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Admin user created successfully: ' + JSON.stringify(data));
+                    localStorage.setItem('adminToken', data.token);
+                } else {
+                    log('❌ Failed to create admin user: ' + data.error);
+                }
+            } catch (error) {
+                log('❌ Error creating admin user: ' + error.message);
+            }
+        }
+
+        async function testAdminLogin() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: 'admin@example.com', 
+                        password: 'admin123'
+                    }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Admin login successful: ' + JSON.stringify(data));
+                    localStorage.setItem('token', data.token);
+                    
+                    // Test token decoding
+                    try {
+                        const payload = JSON.parse(atob(data.token.split('.')[1]));
+                        log('✅ Token payload: ' + JSON.stringify(payload));
+                        log('✅ Is Admin: ' + (payload.role === 'admin'));
+                    } catch (e) {
+                        log('❌ Failed to decode token: ' + e.message);
+                    }
+                } else {
+                    log('❌ Failed to login admin: ' + data.error);
+                }
+            } catch (error) {
+                log('❌ Error logging in admin: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

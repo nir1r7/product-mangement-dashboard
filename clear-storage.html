@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Local Storage</title>
+</head>
+<body>
+    <h1>Clear Local Storage</h1>
+    <button onclick="clearStorage()">Clear All Local Storage</button>
+    <button onclick="checkStorage()">Check Current Storage</button>
+    <div id="output"></div>
+
+    <script>
+        function clearStorage() {
+            localStorage.clear();
+            document.getElementById('output').innerHTML = '<p>Local storage cleared!</p>';
+        }
+
+        function checkStorage() {
+            const output = document.getElementById('output');
+            const token = localStorage.getItem('token');
+            const cart = localStorage.getItem('cart');
+            
+            output.innerHTML = `
+                <h3>Current Local Storage:</h3>
+                <p><strong>Token:</strong> ${token || 'None'}</p>
+                <p><strong>Cart:</strong> ${cart || 'None'}</p>
+            `;
+        }
+
+        // Auto-check on load
+        checkStorage();
+    </script>
+</body>
+</html>

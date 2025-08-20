@@ -1,23 +1,24 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import ProductList from './components/ProductList';
-import ProductDetail from './components/ProductDetail';
-import Login from './components/Login';
-import SignUp from './components/Signup';
-import Profile from './components/Profile';
-import Navbar from './components/Navbar';
-import Cart from './components/Cart';
-import OrderHistory from './components/OrderHistory';
-import ProductDashboard from './components/ProductDashboard';
-import OrderDashboard from './components/OrderDashboard';
-import UserDashboard from './components/UserDashboard';
-import CheckoutPage from './components/CheckoutPage';
+import ProductList from './components/product/ProductList';
+import ProductDetail from './components/product/ProductDetail';
+import Login from './components/auth/Login';
+import SignUp from './components/auth/Signup';
+import Profile from './components/auth/Profile';
+import Navbar from './components/layout/Navbar';
+import Cart from './components/cart/Cart';
+import OrderHistory from './components/order/OrderHistory';
+import ProductDashboard from './components/product/ProductDashboard';
+import OrderDashboard from './components/order/OrderDashboard';
+import UserDashboard from './components/auth/UserDashboard';
+import CheckoutPage from './components/cart/CheckoutPage';
+
 
 import { useAuth } from './contexts/AuthContext';
 import { useCart } from './contexts/CartContext';
 
 function App() {
-    const { token, role } = useAuth();
+    const { token, user } = useAuth();
     const { clearCart } = useCart();
     const { logout } = useAuth();
 
@@ -33,9 +34,9 @@ function App() {
                 <Route path="/" element={<Navigate to="/products" />} />
                 <Route path="/products" element={<ProductList />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/product-dashboard" element={token && role === 'admin' ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
-                <Route path="/order-dashboard" element={token && role === 'admin' ? <OrderDashboard token={token} /> : <Navigate to="/" />} />
-                <Route path="/user-dashboard" element={token && role === 'admin' ? <UserDashboard token={token} /> : <Navigate to="/" />} />
+                <Route path="/product-dashboard" element={token && user?.isAdmin ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
+                <Route path="/order-dashboard" element={token && user?.isAdmin ? <OrderDashboard token={token} /> : <Navigate to="/" />} />
+                <Route path="/user-dashboard" element={token && user?.isAdmin ? <UserDashboard token={token} /> : <Navigate to="/" />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={token ? <CheckoutPage /> : <Navigate to="/login" />} />
                 <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />

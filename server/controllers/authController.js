@@ -40,7 +40,7 @@ const loginUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Login failed' });
     }
-}
+};
 
 const getUserProfile = async (req, res) => {
     const authHeader = req.headers['authorization'];

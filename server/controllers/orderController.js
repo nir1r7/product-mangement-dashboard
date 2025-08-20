@@ -112,4 +112,14 @@ const updateStatus = async (req, res) => {
     }
 };
 
-module.exports = { placeOrder, getUserOrders, getAllOrders, updateStatus };
+const getUserOrdersById = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const orders = await Order.find({ user: userId }).populate('items.product');
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch user orders', error: error.message });
+    }
+};
+
+module.exports = { placeOrder, getUserOrders, getAllOrders, updateStatus, getUserOrdersById };
