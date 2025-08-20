@@ -41,7 +41,6 @@ const getProducts = async (req, res) => {
             }
         }
 
-
         const skip = (Number(page) - 1) * Number(limit);
         const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
 
@@ -68,7 +67,7 @@ const getProducts = async (req, res) => {
 const createProduct = async (req, res) => {
     try {
         const { name, price, description, category, stock } = req.body;
-        const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
+        const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
 
         const product = new Product({
             name,
@@ -76,7 +75,7 @@ const createProduct = async (req, res) => {
             description,
             category,
             stock,
-            imageUrl,
+            images
         });
 
         const saved = await product.save();
@@ -90,9 +89,8 @@ const createProduct = async (req, res) => {
 // PUT /api/products/:id
 const updateProduct = async (req, res) => {
     try {
-        const { name, price, description, category, stock } = req.body;
+        const { name, price, description, category, stock, images } = req.body;
         const product = await Product.findById(req.params.id);
-
         if (!product) return res.status(404).json({ message: 'Product not found' });
 
         product.name = name ?? product.name;
@@ -101,8 +99,18 @@ const updateProduct = async (req, res) => {
         product.category = category ?? product.category;
         product.stock = stock ?? product.stock;
 
-        if (req.file) {
-            product.imageUrl = `/uploads/${req.file.filename}`;
+        if (images !== undefined) {
+            try {
+                const imagesArray = typeof images === 'string' ? JSON.parse(images) : images;
+                product.images = imagesArray;
+            } catch (err) {
+                product.images = images;
+            }
+        }
+
+        if (req.files && req.files.length > 0) {
+            const newImages = req.files.map(f => `/uploads/${f.filename}`);
+            product.images = [...product.images, ...newImages];
         }
 
         const updated = await product.save();
@@ -130,13 +138,13 @@ const deleteProduct = async (req, res) => {
 // public access
 // GET /api/products/:id
 const getProductById = async (req, res) => {
-  try {
-    const prod = await Product.findById(req.params.id);
-    if (!prod) return res.status(404).json({ message: 'Product not found' });
-    res.json(prod);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error while fetching product' });
-  }
+    try {
+        const prod = await Product.findById(req.params.id);
+        if (!prod) return res.status(404).json({ message: 'Product not found' });
+        res.json(prod);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error while fetching product' });
+    }
 };
 
 module.exports = {

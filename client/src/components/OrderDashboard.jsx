@@ -174,8 +174,8 @@ function OrderDashboard() {
                             <td>
                                 <ul>
                                     {order.items.map(item => (
-                                        <li key={item.product._id}>
-                                            {item.product.name} - Qty: {item.quantity}
+                                        <li key={item.product?._id || item._id || Math.random()}>
+                                            {item.product?.name || 'Product Deleted'} - Qty: {item.quantity}
                                         </li>
                                     ))}
                                 </ul>

@@ -1,24 +1,51 @@
-import React, { useEffect, useState, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CartContext } from '../contexts/CartContext';
+import { useCart } from '../contexts/CartContext';
 
-export default function ProductDetail() {
-    const { id } = useParams();
-    const { addToCart } = useContext(CartContext);
+function ProductDetail() {
+    const { addToCart } = useCart();
     const [product, setProduct] = useState(null);
-    const [activeIndex, setActiveIndex] = useState(0);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [err, setErr] = useState('');
+    const [error, setError] = useState(null);
+    const { id } = useParams();
+
+    const nextImage = useCallback(() => {
+        if (product?.images?.length) {
+            setCurrentImageIndex((prev) => 
+                prev === product.images.length - 1 ? 0 : prev + 1
+            );
+        }
+    }, [product]);
+
+    const prevImage = useCallback(() => {
+        if (product?.images?.length) {
+            setCurrentImageIndex((prev) => 
+                prev === 0 ? product.images.length - 1 : prev - 1
+            );
+        }
+    }, [product]);
+
+    useEffect(() => {
+        const handleKeyPress = (e) => {
+            if (e.key === 'ArrowRight') nextImage();
+            if (e.key === 'ArrowLeft') prevImage();
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [nextImage, prevImage]);
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/products/${id}`);
-                if (!res.ok) throw new Error('Failed to fetch product');
-                const data = await res.json();
+                setLoading(true);
+                const response = await fetch(`http://localhost:5000/api/products/${id}`);
+                if (!response.ok) throw new Error('Product not found');
+                const data = await response.json();
                 setProduct(data);
-            } catch (e) {
-                setErr(e.message);
+            } catch (error) {
+                setError(error.message);
             } finally {
                 setLoading(false);
             }
@@ -26,81 +53,71 @@ export default function ProductDetail() {
         fetchProduct();
     }, [id]);
 
-    const galleryImages = useMemo(() => {
-        if (!product) return [];
+    const styles = {
+        container: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', padding: '20px' },
+        mainImage: { width: '100%', maxHeight: '400px', objectFit: 'cover' },
+        navButton: { padding: '10px', margin: '5px', cursor: 'pointer' },
+        thumbnail: { width: '60px', height: '60px', objectFit: 'cover', cursor: 'pointer', margin: '5px' },
+        thumbnails: { display: 'flex', flexWrap: 'wrap', marginTop: '10px' }
+    };
 
-        const imgs = (product.images && product.images.length > 0)
-        ? product.images
-        : (product.imageUrl ? [product.imageUrl] : []);
-        return imgs.map(src => src.startsWith('http') ? src : `http://localhost:5000${src}`);
-    }, [product]);
-
-    if (loading) return <div>Loading product...</div>;
-    if (err) return <div style={{ color: 'red' }}>{err}</div>;
-    if (!product) return <div>Product not found.</div>;
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>{error}</div>;
+    if (!product) return <div>Product not found</div>;
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div style={styles.container}>
             <div>
-                {galleryImages[activeIndex] && (
-                <div style={{ border: '1px solid #eee', borderRadius: 8, overflow: 'hidden' }}>
-                    <img
-                    src={galleryImages[activeIndex]}
-                    alt={product.name}
-                    style={{ width: '100%', height: 420, objectFit: 'cover' }}
-                    />
-                </div>
-                )}
-
-                {galleryImages.length > 1 && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                    {galleryImages.map((src, i) => (
-                    <button
-                        key={i}
-                        onClick={() => setActiveIndex(i)}
-                        style={{
-                            border: i === activeIndex ? '2px solid #333' : '1px solid #ddd',
-                            borderRadius: 6,
-                            padding: 0,
-                            background: 'none',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <img
-                            src={src}
-                            alt={`${product.name} ${i + 1}`}
-                            style={{ width: 72, height: 72, objectFit: 'cover', display: 'block' }}
-                        />
-                    </button>
-                    ))}
-                </div>
+                {product.images && product.images.length > 0 ? (
+                    <>
+                        <div>
+                            <button style={styles.navButton} onClick={prevImage}>‹</button>
+                            <img 
+                                src={`http://localhost:5000${product.images[currentImageIndex]}`}
+                                alt={product.name}
+                                style={styles.mainImage}
+                            />
+                            <button style={styles.navButton} onClick={nextImage}>›</button>
+                        </div>
+                        <div style={styles.thumbnails}>
+                            {product.images.map((url, index) => (
+                                <img
+                                    key={url}
+                                    src={`http://localhost:5000${url}`}
+                                    alt={`${product.name} thumbnail ${index + 1}`}
+                                    style={styles.thumbnail}
+                                    onClick={() => setCurrentImageIndex(index)}
+                                />
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <div>No images available</div>
                 )}
             </div>
-
             <div>
-                <h1 style={{ marginTop: 0 }}>{product.name}</h1>
-                <div style={{ fontSize: 20, fontWeight: 600, margin: '8px 0' }}>
-                    ${Number(product.price).toFixed(2)}
-                </div>
-                <div style={{ color: '#666', marginBottom: 16 }}>
-                    Category: {product.category} • In stock: {product.stock}
-                </div>
-                <p style={{ lineHeight: 1.6 }}>{product.description}</p>
+                <h1>{product.name}</h1>
+                <p>${product.price.toFixed(2)}</p>
+                <p>{product.description}</p>
+                <p>Stock: {product.stock}</p>
+                <p>Category: {product.category}</p>
+            </div>
 
-                <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                    <button
-                        onClick={() => addToCart(product)}
-                        disabled={product.stock === 0}
-                        style={{ padding: '10px 16px' }}
-                    >
-                        {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                    </button>
+            <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+                <button
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock === 0}
+                    style={{ padding: '10px 16px' }}
+                >
+                    {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </button>
 
-                    <Link to="/products" style={{ alignSelf: 'center' }}>
-                        ← Back to Products
-                    </Link>
-                </div>
+                <Link to="/products" style={{ alignSelf: 'center' }}>
+                    ← Back to Products
+                </Link>
             </div>
         </div>
     );
 }
+
+export default ProductDetail;

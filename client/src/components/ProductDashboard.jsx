@@ -12,7 +12,7 @@ function ProductDashboard({ token }) {
         description: '',
         category: '',
         stock: '',
-        image: null
+        images: []
     });
     const [message, setMessage] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,14 +43,35 @@ function ProductDashboard({ token }) {
     };
 
     const handleFileChange = (e) => {
-        setNewProduct({ ...newProduct, image: e.target.files[0] });
+        const files = Array.from(e.target.files);
+        setNewProduct((prev) => ({
+            ...prev,
+            images: [...prev.images, ...files]
+        }));
+    };
+
+    const removeFile = (index) => {
+        setNewProduct((prev) => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
+    };
+
+    const clearFileInput = () => {
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.value = '';
+        }
     };
 
     const handleAddProduct = async () => {
         const formData = new FormData();
+
         for (const key in newProduct) {
-            if (key === 'image' && newProduct[key]) {
-                formData.append('image', newProduct[key]);
+            if (key === 'images' && newProduct.images.length > 0) {
+                newProduct.images.forEach((file) => {
+                    formData.append('images', file);
+                });
             } else {
                 formData.append(key, newProduct[key]);
             }
@@ -74,8 +95,9 @@ function ProductDashboard({ token }) {
                     description: '',
                     category: '',
                     stock: '',
-                    image: null
+                    images: []
                 });
+                clearFileInput();
                 setMessage('Product added successfully!');
             } else {
                 const errorData = await response.json();
@@ -120,15 +142,54 @@ function ProductDashboard({ token }) {
         setEditFormData({ ...editFormData, [name]: value });
     };
 
+    const handleEditFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setEditFormData((prev) => ({
+            ...prev,
+            newImages: [...(prev.newImages || []), ...files]
+        }));
+    };
+
+    const removeExistingImage = (imageUrl) => {
+        setEditFormData((prev) => ({
+            ...prev,
+            images: prev.images.filter(img => img !== imageUrl)
+        }));
+    };
+
+    const removeNewImage = (index) => {
+        setEditFormData((prev) => ({
+            ...prev,
+            newImages: prev.newImages.filter((_, i) => i !== index)
+        }));
+    };
+
     const handleSaveEdit = async (id) => {
         try {
+            const formData = new FormData();
+            
+            formData.append('name', editFormData.name);
+            formData.append('price', editFormData.price);
+            formData.append('description', editFormData.description);
+            formData.append('category', editFormData.category);
+            formData.append('stock', editFormData.stock);
+            
+            if (editFormData.images) {
+                formData.append('images', JSON.stringify(editFormData.images));
+            }
+            
+            if (editFormData.newImages && editFormData.newImages.length > 0) {
+                editFormData.newImages.forEach((file) => {
+                    formData.append('images', file);
+                });
+            }
+
             const response = await fetch(`http://localhost:5000/api/products/${id}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(editFormData)
+                body: formData
             });
 
             if (response.ok) {
@@ -198,7 +259,51 @@ function ProductDashboard({ token }) {
                 <tbody>
                     <tr>
                         <td>
-                            <input type="file" onChange={handleFileChange} />
+                            <input 
+                                type="file" 
+                                multiple 
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                style={{
+                                    padding: '8px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    fontSize: '14px'
+                                }}
+                            />
+                            {newProduct.images.length > 0 && (
+                                <div style={{ marginTop: '8px' }}>
+                                    {newProduct.images.map((file, index) => (
+                                        <div key={index} style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            marginBottom: '4px',
+                                            fontSize: '12px'
+                                        }}>
+                                            <span style={{ flex: 1, color: '#666' }}>
+                                                {file.name}
+                                            </span>
+                                            <button 
+                                                type="button"
+                                                onClick={() => removeFile(index)}
+                                                style={{
+                                                    background: '#ff4444',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '50%',
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '12px',
+                                                    marginLeft: '8px'
+                                                }}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </td>
                         <td>
                             <input
@@ -253,12 +358,107 @@ function ProductDashboard({ token }) {
                     {filteredProducts.map(product => (
                         <tr key={product._id}>
                             <td>
-                                {product.imageUrl && (
-                                    <img
-                                        src={`http://localhost:5000${product.imageUrl}`}
-                                        alt={product.name}
-                                        width="50"
-                                    />
+                                {editingRowId === product._id ? (
+                                    <div>
+                                        {editFormData.images && editFormData.images.length > 0 && (
+                                            editFormData.images.map((url, i) => (
+                                                <div key={i} style={{ 
+                                                    position: 'relative', 
+                                                    display: 'inline-block',
+                                                    marginRight: '4px',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    <img
+                                                        src={`http://localhost:5000${url}`}
+                                                        alt={product.name}
+                                                        width="50"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeExistingImage(url)}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: '-5px',
+                                                            right: '-5px',
+                                                            background: '#ff4444',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '50%',
+                                                            width: '20px',
+                                                            height: '20px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '12px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                        
+                                        <input 
+                                            type="file" 
+                                            multiple 
+                                            accept="image/*"
+                                            onChange={handleEditFileChange}
+                                            style={{
+                                                padding: '4px',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
+                                                marginTop: '8px'
+                                            }}
+                                        />
+                                        
+                                        {editFormData.newImages && editFormData.newImages.length > 0 && (
+                                            <div style={{ marginTop: '8px' }}>
+                                                {editFormData.newImages.map((file, index) => (
+                                                    <div key={index} style={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        marginBottom: '4px',
+                                                        fontSize: '12px'
+                                                    }}>
+                                                        <span style={{ flex: 1, color: '#666' }}>
+                                                            {file.name}
+                                                        </span>
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => removeNewImage(index)}
+                                                            style={{
+                                                                background: '#ff4444',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '50%',
+                                                                width: '20px',
+                                                                height: '20px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '12px',
+                                                                marginLeft: '8px'
+                                                            }}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    product.images && product.images.length > 0 && (
+                                        product.images.map((url, i) => (
+                                            <img
+                                                key={i}
+                                                src={`http://localhost:5000${url}`}
+                                                alt={product.name}
+                                                width="50"
+                                                style={{ marginRight: '4px' }}
+                                            />
+                                        ))
+                                    )
                                 )}
                             </td>
 

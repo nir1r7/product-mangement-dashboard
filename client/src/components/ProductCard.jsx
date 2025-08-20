@@ -19,20 +19,30 @@ const cardStyles = {
 };
 
 export default function ProductCard({ product }) {
-    const mainImage = (product.images && product.images.length > 0)
-        ? product.images[0]
-        : product.imageUrl;
+    const mainImage = product.images && product.images.length > 0 ? product.images[0] : null;
 
     return (
             <Link to={`/products/${product._id}`} style={cardStyles.container}>
                 <div style={cardStyles.imgWrap}>
                     {mainImage ? (
                     <img
-                        src={mainImage.startsWith('http') ? mainImage : `http://localhost:5000${mainImage}`}
+                        src={`http://localhost:5000${mainImage}`}
                         alt={product.name}
                         style={cardStyles.img}
                     />
-                    ) : null}
+                    ) : (
+                        <div style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            background: '#f0f0f0',
+                            color: '#666'
+                        }}>
+                            No Image
+                        </div>
+                    )}
                 </div>
                 <h3 style={cardStyles.name}>{product.name}</h3>
                 <div style={cardStyles.price}>${Number(product.price).toFixed(2)}</div>
