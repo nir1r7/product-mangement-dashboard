@@ -35,7 +35,7 @@ const UserDashboard = ({ token }) => {
 
     const updateUserRole = async (userId, role) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+            const response = await fetch(`http://localhost:5000/api/users/${userId}/role`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -44,17 +44,24 @@ const UserDashboard = ({ token }) => {
                 body: JSON.stringify({ role })
             });
 
-            if (!response.ok) throw new Error('Failed to update user');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update user role');
+            }
 
             await fetchUsers();
         } catch (error) {
             console.error('Error updating user:', error);
-            alert('Failed to update user role');
+            alert(`Failed to update user role: ${error.message}`);
         }
     };
 
     const deleteUser = async (userId) => {
-        if (!window.confirm('Are you sure you want to delete this user?')) {
+        // Find the user to get their details for confirmation
+        const userToDelete = users.find(user => user._id === userId);
+        const confirmMessage = `Are you sure you want to delete user "${userToDelete?.name}" (${userToDelete?.email})?\n\nThis action cannot be undone.`;
+
+        if (!window.confirm(confirmMessage)) {
             return;
         }
 
@@ -66,12 +73,17 @@ const UserDashboard = ({ token }) => {
                 }
             });
 
-            if (!response.ok) throw new Error('Failed to delete user');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete user');
+            }
 
+            const result = await response.json();
+            alert(result.message || 'User deleted successfully');
             await fetchUsers();
         } catch (error) {
             console.error('Error deleting user:', error);
-            alert('Failed to delete user');
+            alert(`Failed to delete user: ${error.message}`);
         }
     };
 

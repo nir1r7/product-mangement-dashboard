@@ -7,7 +7,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.0",
     "multer": "^2.0.2",
-    "nodemon": "^3.1.10"
+    "nodemailer": "^7.0.5",
+    "nodemon": "^3.1.10",
+    "resend": "^6.0.1"
   },
   "scripts": {
     "start": "node server.js",

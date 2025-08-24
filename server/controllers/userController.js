@@ -36,8 +36,73 @@ const getUserOrders = async (req, res) => {
     }
 };
 
+const updateUserRole = async (req, res) => {
+    try {
+        const { role } = req.body;
+
+        // Validate role
+        if (!['user', 'admin'].includes(role)) {
+            return res.status(400).json({ message: 'Invalid role. Must be "user" or "admin"' });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.role = role;
+        await user.save();
+
+        res.json({
+            message: 'User role updated successfully',
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deleteUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+
+        // Check if user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Prevent deleting the last admin
+        if (user.role === 'admin') {
+            const adminCount = await User.countDocuments({ role: 'admin' });
+            if (adminCount <= 1) {
+                return res.status(400).json({
+                    message: 'Cannot delete the last admin user. At least one admin must remain.'
+                });
+            }
+        }
+
+        // Delete the user
+        await User.findByIdAndDelete(userId);
+
+        res.json({
+            message: 'User deleted successfully',
+            deletedUserId: userId
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getAllUsers,
     updateUserNotes,
-    getUserOrders
+    getUserOrders,
+    updateUserRole,
+    deleteUser
 };

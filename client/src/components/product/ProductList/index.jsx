@@ -10,7 +10,7 @@ const ProductList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('newest');
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [priceRange, setPriceRange] = useState([0, 1000]);
+    const [priceRange, setPriceRange] = useState([0, 100000]);
     const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
@@ -47,10 +47,8 @@ const ProductList = () => {
         setPriceRange(range);
     };
 
-    // Get unique categories
     const categories = [...new Set(products.map(product => product.category))];
 
-    // Filter products
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -73,6 +71,10 @@ const ProductList = () => {
                 return a.name.localeCompare(b.name);
             case 'name-desc':
                 return b.name.localeCompare(a.name);
+            case 'rating-high':
+                return (b.reviewStats?.averageRating || 0) - (a.reviewStats?.averageRating || 0);
+            case 'rating-low':
+                return (a.reviewStats?.averageRating || 0) - (b.reviewStats?.averageRating || 0);
             case 'newest':
                 return new Date(b.createdAt) - new Date(a.createdAt);
             case 'oldest':
@@ -112,16 +114,6 @@ const ProductList = () => {
             <div className="product-list-header">
                 <h1 className="product-list-title">Our Products</h1>
 
-                {/* Full-width Search Bar */}
-                <div className="search-bar-container">
-                    <SearchBar
-                        onSearch={handleSearch}
-                        placeholder="Search products by name, description, or category..."
-                        value={searchQuery}
-                    />
-                </div>
-
-                {/* Filter and Sort Controls */}
                 <div className="controls-section">
                     <div className="controls-header">
                         <button
@@ -130,6 +122,13 @@ const ProductList = () => {
                         >
                             🔧 Filters & Sort {showFilters ? '▲' : '▼'}
                         </button>
+
+                        <SearchBar
+                            onSearch={handleSearch}
+                            placeholder="Search products..."
+                            value={searchQuery}
+                        />
+
                         <div className="results-count">
                             {sortedProducts.length} product{sortedProducts.length !== 1 ? 's' : ''} found
                         </div>
@@ -137,83 +136,86 @@ const ProductList = () => {
 
                     {showFilters && (
                         <div className="filters-panel">
-                            {/* Sort Options */}
-                            <div className="filter-group">
-                                <label>Sort by:</label>
-                                <select value={sortBy} onChange={(e) => handleSortChange(e.target.value)}>
-                                    <option value="newest">Newest First</option>
-                                    <option value="oldest">Oldest First</option>
-                                    <option value="price-low">Price: Low to High</option>
-                                    <option value="price-high">Price: High to Low</option>
-                                    <option value="name-asc">Name: A to Z</option>
-                                    <option value="name-desc">Name: Z to A</option>
-                                </select>
-                            </div>
-
-                            {/* Category Filter */}
-                            <div className="filter-group">
-                                <label>Category:</label>
-                                <select value={selectedCategory} onChange={(e) => handleCategoryChange(e.target.value)}>
-                                    <option value="">All Categories</option>
-                                    {categories.map(category => (
-                                        <option key={category} value={category}>{category}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Price Range */}
-                            <div className="filter-group">
-                                <label>Price Range: ${priceRange[0]} - ${priceRange[1]}</label>
-                                <div className="price-range-container">
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="1000"
-                                        value={priceRange[0]}
-                                        onChange={(e) => handlePriceRangeChange([parseInt(e.target.value), priceRange[1]])}
-                                        className="price-slider"
-                                    />
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="1000"
-                                        value={priceRange[1]}
-                                        onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value)])}
-                                        className="price-slider"
-                                    />
-                                </div>
-                                <div className="price-inputs">
-                                    <input
-                                        type="number"
-                                        value={priceRange[0]}
-                                        onChange={(e) => handlePriceRangeChange([parseInt(e.target.value) || 0, priceRange[1]])}
-                                        placeholder="Min"
-                                        className="price-input"
-                                    />
-                                    <span>to</span>
-                                    <input
-                                        type="number"
-                                        value={priceRange[1]}
-                                        onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value) || 1000])}
-                                        placeholder="Max"
-                                        className="price-input"
-                                    />
+                            <div className="search-sort-row">
+                                <div className="filter-group">
+                                    <label>Sort by:</label>
+                                    <select value={sortBy} onChange={(e) => handleSortChange(e.target.value)}>
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="price-low">Price: Low to High</option>
+                                        <option value="price-high">Price: High to Low</option>
+                                        <option value="rating-high">Rating: High to Low</option>
+                                        <option value="rating-low">Rating: Low to High</option>
+                                        <option value="name-asc">Name: A to Z</option>
+                                        <option value="name-desc">Name: Z to A</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            {/* Clear Filters */}
-                            <div className="filter-group">
-                                <button
-                                    className="clear-filters-btn"
-                                    onClick={() => {
-                                        setSearchQuery('');
-                                        setSelectedCategory('');
-                                        setPriceRange([0, 1000]);
-                                        setSortBy('newest');
-                                    }}
-                                >
-                                    Clear All Filters
-                                </button>
+                            <div className="filters-row">
+                                <div className="filter-group">
+                                    <label>Category:</label>
+                                    <select value={selectedCategory} onChange={(e) => handleCategoryChange(e.target.value)}>
+                                        <option value="">All Categories</option>
+                                        {categories.map(category => (
+                                            <option key={category} value={category}>{category}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="filter-group">
+                                    <label>Price Range: ${priceRange[0]} - ${priceRange[1]}</label>
+                                    <div className="price-range-container">
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100000"
+                                            value={priceRange[0]}
+                                            onChange={(e) => handlePriceRangeChange([parseInt(e.target.value), priceRange[1]])}
+                                            className="price-slider"
+                                        />
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100000"
+                                            value={priceRange[1]}
+                                            onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value)])}
+                                            className="price-slider"
+                                        />
+                                    </div>
+                                    <div className="price-inputs">
+                                        <input
+                                            type="number"
+                                            value={priceRange[0]}
+                                            onChange={(e) => handlePriceRangeChange([parseInt(e.target.value) || 0, priceRange[1]])}
+                                            placeholder="Min"
+                                            className="price-input"
+                                        />
+                                        <span>to</span>
+                                        <input
+                                            type="number"
+                                            value={priceRange[1]}
+                                            onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value) || 100000])}
+                                            placeholder="Max"
+                                            className="price-input"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="filter-group">
+                                    <label>&nbsp;</label>
+                                    <button
+                                        className="clear-filters-btn"
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setSelectedCategory('');
+                                            setPriceRange([0, 100000]);
+                                            setSortBy('newest');
+                                        }}
+                                    >
+                                        Clear All Filters
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

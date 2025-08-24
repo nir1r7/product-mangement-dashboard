@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 
 // POST /api/orders
 const placeOrder = async (req, res) => {
@@ -82,6 +83,11 @@ const placeOrder = async (req, res) => {
         .populate('items.product', 'name price')
         .populate('user', 'name email');
 
+        // Send order confirmation email (don't wait for it to complete)
+        sendOrderConfirmationEmail(populatedOrder.user.email, populatedOrder, populatedOrder.user).catch(err => {
+            console.error('Failed to send order confirmation email:', err);
+        });
+
         res.status(201).json(populatedOrder);
     } catch (error) {
         await session.abortTransaction();
@@ -115,10 +121,19 @@ const updateStatus = async (req, res) => {
     const { status } = req.body;
 
     try {
-        const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+        const order = await Order.findByIdAndUpdate(id, { status }, { new: true })
+            .populate('items.product', 'name price')
+            .populate('user', 'name email');
+
         if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
+            return res.status(404).json({ message: 'Order not found' });
         }
+
+        // Send status update email (don't wait for it to complete)
+        sendOrderStatusUpdateEmail(order.user.email, order, order.user, status).catch(err => {
+            console.error('Failed to send order status update email:', err);
+        });
+
         res.json(order);
     } catch (error) {
         res.status(500).json({ message: 'Failed to update order status', error: error.message });

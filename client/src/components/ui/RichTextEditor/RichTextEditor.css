@@ -1,0 +1,121 @@
+.rich-text-editor {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--accent-primary);
+}
+
+.toolbar-btn.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  margin: 0 4px;
+}
+
+.editor-content {
+  min-height: 120px;
+  padding: 12px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  overflow-y: auto;
+}
+
+.editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  font-style: italic;
+  pointer-events: none;
+}
+
+.editor-content:focus {
+  outline: none;
+}
+
+.editor-preview {
+  min-height: 120px;
+  padding: 12px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  border: none;
+}
+
+.rich-text-editor:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
+}
+
+/* Content styling */
+.editor-content ul,
+.editor-preview ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.editor-content ol,
+.editor-preview ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.editor-content li,
+.editor-preview li {
+  margin: 4px 0;
+}
+
+.editor-content p,
+.editor-preview p {
+  margin: 8px 0;
+}
+
+.editor-content strong,
+.editor-preview strong {
+  font-weight: 600;
+}
+
+.editor-content em,
+.editor-preview em {
+  font-style: italic;
+}

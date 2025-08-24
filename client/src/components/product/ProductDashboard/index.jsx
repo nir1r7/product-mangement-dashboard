@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SearchBar from '../../ui/SearchBar';
+import RichTextEditor from '../../ui/RichTextEditor';
 import './ProductDashboard.css';
 
 const ProductDashboard = ({ token }) => {
@@ -7,6 +8,7 @@ const ProductDashboard = ({ token }) => {
     const [loading, setLoading] = useState(true);
     const [editingRowId, setEditingRowId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showAddForm, setShowAddForm] = useState(false);
     const [newProduct, setNewProduct] = useState({
         name: '',
         price: '',
@@ -212,8 +214,19 @@ const ProductDashboard = ({ token }) => {
 
             <div className="product-dashboard-content">
                 <div className="add-product-section">
-                    <h2>Add New Product</h2>
-                    <form onSubmit={handleAddProduct} className="add-product-form">
+                    <div className="add-product-header">
+                        <h2>Add New Product</h2>
+                        <button
+                            type="button"
+                            onClick={() => setShowAddForm(!showAddForm)}
+                            className="toggle-form-btn"
+                        >
+                            {showAddForm ? '▲ Hide Form' : '▼ Show Form'}
+                        </button>
+                    </div>
+
+                    {showAddForm && (
+                        <form onSubmit={handleAddProduct} className="add-product-form">
                         <div className="form-row">
                             <div className="form-group">
                                 <label htmlFor="name" className="form-label">Name</label>
@@ -242,12 +255,10 @@ const ProductDashboard = ({ token }) => {
                         
                         <div className="form-group">
                             <label htmlFor="description" className="form-label">Description</label>
-                            <textarea
-                                id="description"
+                            <RichTextEditor
                                 value={newProduct.description}
-                                onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
-                                className="form-input form-textarea"
-                                required
+                                onChange={(value) => setNewProduct(prev => ({ ...prev, description: value }))}
+                                placeholder="Enter product description..."
                             />
                         </div>
                         
@@ -305,7 +316,8 @@ const ProductDashboard = ({ token }) => {
                         </div>
                         
                         <button type="submit" className="btn btn-primary">Add Product</button>
-                    </form>
+                        </form>
+                    )}
                 </div>
 
                 {/* Search Bar */}

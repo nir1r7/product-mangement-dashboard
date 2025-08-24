@@ -82,16 +82,51 @@ const CheckoutPage = () => {
         setPaymentData(newPaymentData);
     };
 
-    const handleNextStep = () => {
+    const checkStockAvailability = async () => {
+        try {
+            for (const item of cartItems) {
+                const product = item.product || item;
+                const productId = product._id || item._id;
+
+                const response = await fetch(`http://localhost:5000/api/products/${productId}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch product ${productId}`);
+                }
+
+                const productData = await response.json();
+                if (productData.stock < item.quantity) {
+                    throw new Error(`Insufficient stock for "${productData.name}". Available: ${productData.stock}, Requested: ${item.quantity}`);
+                }
+            }
+            return true;
+        } catch (error) {
+            setError(error.message);
+            return false;
+        }
+    };
+
+    const handleNextStep = async () => {
         if (currentStep === 1) {
             // Validate shipping form
             if (!formData.fullName || !formData.address || !formData.city || !formData.state || !formData.postalCode) {
                 setError('Please fill in all shipping information');
                 return;
             }
+
+            // Check stock availability
+            const stockAvailable = await checkStockAvailability();
+            if (!stockAvailable) {
+                return;
+            }
+
             setError('');
             setCurrentStep(2);
         } else if (currentStep === 2) {
+            // Check stock again before proceeding to review
+            const stockAvailable = await checkStockAvailability();
+            if (!stockAvailable) {
+                return;
+            }
             setCurrentStep(3);
         }
     };
@@ -107,6 +142,12 @@ const CheckoutPage = () => {
         setError('');
 
         try {
+            // Final stock check before placing order
+            const stockAvailable = await checkStockAvailability();
+            if (!stockAvailable) {
+                setLoading(false);
+                return;
+            }
             const orderData = {
                 items: cartItems.map(item => {
                     const product = item.product || item;
