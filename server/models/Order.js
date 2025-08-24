@@ -16,10 +16,18 @@ const orderSchema = new mongoose.Schema({
         city:      { type: String, required: true },
         province:     { type: String, required: true },
         postalCode:       { type: String, required: true },
-        country:   { type: String, required: true }
+        country:   { type: String, default: 'Canada' }
     },
     paymentMethod: { type: String, enum: ['COD', 'Card', 'PayPal'], default: 'COD' },
+    paymentDetails: {
+        cardHolderName: { type: String },
+        cardLastFour: { type: String },
+        cardType: { type: String }
+    },
     paymentStatus: { type: String, enum: ['Pending', 'Paid', 'Failed'], default: 'Paid' }, // assuming instant “Pay”
+    subtotal: { type: Number, required: true },
+    shippingCost: { type: Number, default: 0 },
+    taxAmount: { type: Number, default: 0 },
     totalPrice: { type: Number, required: true },
     status: { type: String, enum: ['Cancelled', 'Pending', 'Paid', 'Shipped', 'Delivered'], default: 'Pending' },
     createdAt: { type: Date, default: Date.now }

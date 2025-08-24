@@ -182,21 +182,7 @@ const OrderDashboard = ({ token }) => {
         <div className="order-dashboard-container">
             <h1 className="order-dashboard-title">Order Management</h1>
 
-            {/* Search Bar */}
-            <div className="search-section">
-                <SearchBar
-                    onSearch={handleSearch}
-                    placeholder="Search orders by ID, customer, status, or shipping address..."
-                    value={searchQuery}
-                />
-                {searchQuery && (
-                    <div className="search-results-info">
-                        <p>Showing {orders.length} results for "{searchQuery}"</p>
-                    </div>
-                )}
-            </div>
-
-            {/* Sorting Controls */}
+            {/* Sorting and Search Controls */}
             <div className="sorting-controls">
                 <div className="sort-options">
                     <label htmlFor="sort-select">Sort by:</label>
@@ -214,6 +200,15 @@ const OrderDashboard = ({ token }) => {
                         <option value="least-expensive">Least Expensive</option>
                     </select>
                 </div>
+
+                <div className="search-controls">
+                    <SearchBar
+                        onSearch={handleSearch}
+                        placeholder="Search orders..."
+                        value={searchQuery}
+                    />
+                </div>
+
                 <div className="ignore-cancellations">
                     <label className="checkbox-label">
                         <input
@@ -226,6 +221,12 @@ const OrderDashboard = ({ token }) => {
                     </label>
                 </div>
             </div>
+
+            {searchQuery && (
+                <div className="search-results-info">
+                    <p>Showing {orders.length} results for "{searchQuery}"</p>
+                </div>
+            )}
 
             {orders.length === 0 ? (
                 <div className="orders-table-container">

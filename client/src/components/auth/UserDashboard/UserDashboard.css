@@ -467,8 +467,8 @@
 .user-order-history .order-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0;
+    align-items: flex-start;
+    padding: 1rem 0;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -477,15 +477,21 @@
 }
 
 .user-order-history .order-item__info h4 {
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 0.5rem 0;
     color: var(--text-primary);
     font-size: 1rem;
+    font-weight: 600;
 }
 
 .user-order-history .order-item__info p {
-    margin: 0;
+    margin: 0 0 0.25rem 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.user-order-history .order-item__info p:last-child {
+    margin-bottom: 0;
 }
 
 .user-order-history .order-item__total {

@@ -39,12 +39,12 @@ const Navbar = () => {
                     <Link to="/products" className="navbar__link">
                         Products
                     </Link>
+                    <Link to="/cart" className="navbar__link">
+                        Cart
+                    </Link>
                     
                     {user ? (
                         <>
-                            <Link to="/cart" className="navbar__link">
-                                Cart
-                            </Link>
                             <Link to="/profile" className="navbar__link">
                                 Profile
                             </Link>

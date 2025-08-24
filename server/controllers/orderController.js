@@ -10,7 +10,16 @@ const placeOrder = async (req, res) => {
 
     try {
         const userId = req.user.id;
-        const { items: cartItems, shippingAddress, paymentMethod = 'COD' } = req.body;
+        const {
+            items: cartItems,
+            shippingAddress,
+            paymentMethod = 'COD',
+            paymentDetails = {},
+            subtotal,
+            shippingCost = 0,
+            taxAmount = 0,
+            totalPrice
+        } = req.body;
 
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: 'Cart is empty' });
@@ -22,7 +31,7 @@ const placeOrder = async (req, res) => {
             return res.status(400).json({ message: `Missing shipping fields: ${missing.join(', ')}` });
         }
 
-        let totalPrice = 0;
+        let calculatedTotal = 0;
         const productIds = cartItems.map(item => item.product);
         const products = await Product.find({ _id: { $in: productIds } }).session(session);
 
@@ -34,7 +43,7 @@ const placeOrder = async (req, res) => {
             if (product.stock < item.quantity) {
                 throw new Error(`Insufficient stock for "${product.name}". Available: ${product.stock}, Requested: ${item.quantity}`);
             }
-            totalPrice += product.price * item.quantity;
+            calculatedTotal += product.price * item.quantity;
         }
 
         for (let item of cartItems) {
@@ -46,9 +55,13 @@ const placeOrder = async (req, res) => {
         const order = await Order.create([{
             user: userId,
             items: cartItems,
-            totalPrice,
+            subtotal: subtotal || calculatedTotal,
+            shippingCost: shippingCost || 0,
+            taxAmount: taxAmount || 0,
+            totalPrice: totalPrice || calculatedTotal,
             shippingAddress,
             paymentMethod,
+            paymentDetails,
             paymentStatus: 'Paid',
             status: 'Paid'
         }], { session });

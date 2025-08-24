@@ -8,6 +8,10 @@ const ProductList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('newest');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [priceRange, setPriceRange] = useState([0, 1000]);
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         fetchProducts();
@@ -31,11 +35,52 @@ const ProductList = () => {
         setSearchQuery(query);
     };
 
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const handleSortChange = (sortType) => {
+        setSortBy(sortType);
+    };
+
+    const handleCategoryChange = (category) => {
+        setSelectedCategory(category);
+    };
+
+    const handlePriceRangeChange = (range) => {
+        setPriceRange(range);
+    };
+
+    // Get unique categories
+    const categories = [...new Set(products.map(product => product.category))];
+
+    // Filter products
+    const filteredProducts = products.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            product.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesCategory = !selectedCategory || product.category === selectedCategory;
+        const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+
+        return matchesSearch && matchesCategory && matchesPrice;
+    });
+
+    // Sort products
+    const sortedProducts = [...filteredProducts].sort((a, b) => {
+        switch (sortBy) {
+            case 'price-low':
+                return a.price - b.price;
+            case 'price-high':
+                return b.price - a.price;
+            case 'name-asc':
+                return a.name.localeCompare(b.name);
+            case 'name-desc':
+                return b.name.localeCompare(a.name);
+            case 'newest':
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            case 'oldest':
+                return new Date(a.createdAt) - new Date(b.createdAt);
+            default:
+                return 0;
+        }
+    });
 
     if (loading) {
         return (
@@ -66,27 +111,123 @@ const ProductList = () => {
         <div className="product-list-container">
             <div className="product-list-header">
                 <h1 className="product-list-title">Our Products</h1>
-                <SearchBar
-                    onSearch={handleSearch}
-                    placeholder="Search products by name, description, or category..."
-                    value={searchQuery}
-                />
-            </div>
-            
-            {searchQuery && (
-                <div className="search-results">
-                    <p>Showing {filteredProducts.length} results for "{searchQuery}"</p>
+
+                {/* Full-width Search Bar */}
+                <div className="search-bar-container">
+                    <SearchBar
+                        onSearch={handleSearch}
+                        placeholder="Search products by name, description, or category..."
+                        value={searchQuery}
+                    />
                 </div>
-            )}
-            
-            {filteredProducts.length === 0 ? (
+
+                {/* Filter and Sort Controls */}
+                <div className="controls-section">
+                    <div className="controls-header">
+                        <button
+                            className="filters-toggle"
+                            onClick={() => setShowFilters(!showFilters)}
+                        >
+                            🔧 Filters & Sort {showFilters ? '▲' : '▼'}
+                        </button>
+                        <div className="results-count">
+                            {sortedProducts.length} product{sortedProducts.length !== 1 ? 's' : ''} found
+                        </div>
+                    </div>
+
+                    {showFilters && (
+                        <div className="filters-panel">
+                            {/* Sort Options */}
+                            <div className="filter-group">
+                                <label>Sort by:</label>
+                                <select value={sortBy} onChange={(e) => handleSortChange(e.target.value)}>
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="price-low">Price: Low to High</option>
+                                    <option value="price-high">Price: High to Low</option>
+                                    <option value="name-asc">Name: A to Z</option>
+                                    <option value="name-desc">Name: Z to A</option>
+                                </select>
+                            </div>
+
+                            {/* Category Filter */}
+                            <div className="filter-group">
+                                <label>Category:</label>
+                                <select value={selectedCategory} onChange={(e) => handleCategoryChange(e.target.value)}>
+                                    <option value="">All Categories</option>
+                                    {categories.map(category => (
+                                        <option key={category} value={category}>{category}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Price Range */}
+                            <div className="filter-group">
+                                <label>Price Range: ${priceRange[0]} - ${priceRange[1]}</label>
+                                <div className="price-range-container">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1000"
+                                        value={priceRange[0]}
+                                        onChange={(e) => handlePriceRangeChange([parseInt(e.target.value), priceRange[1]])}
+                                        className="price-slider"
+                                    />
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1000"
+                                        value={priceRange[1]}
+                                        onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value)])}
+                                        className="price-slider"
+                                    />
+                                </div>
+                                <div className="price-inputs">
+                                    <input
+                                        type="number"
+                                        value={priceRange[0]}
+                                        onChange={(e) => handlePriceRangeChange([parseInt(e.target.value) || 0, priceRange[1]])}
+                                        placeholder="Min"
+                                        className="price-input"
+                                    />
+                                    <span>to</span>
+                                    <input
+                                        type="number"
+                                        value={priceRange[1]}
+                                        onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value) || 1000])}
+                                        placeholder="Max"
+                                        className="price-input"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Clear Filters */}
+                            <div className="filter-group">
+                                <button
+                                    className="clear-filters-btn"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedCategory('');
+                                        setPriceRange([0, 1000]);
+                                        setSortBy('newest');
+                                    }}
+                                >
+                                    Clear All Filters
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {sortedProducts.length === 0 ? (
                 <div className="no-products">
                     <h3>No products found</h3>
-                    <p>Try adjusting your search terms or browse all products.</p>
+                    <p>Try adjusting your search terms or filters.</p>
                 </div>
             ) : (
                 <div className="product-grid">
-                    {filteredProducts.map(product => (
+                    {sortedProducts.map(product => (
                         <ProductCard key={product._id} product={product} />
                     ))}
                 </div>

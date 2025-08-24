@@ -210,20 +210,6 @@ const ProductDashboard = ({ token }) => {
         <div className="product-dashboard-container">
             <h1 className="product-dashboard-title">Product Management</h1>
 
-            {/* Search Bar */}
-            <div className="search-section">
-                <SearchBar
-                    onSearch={handleSearch}
-                    placeholder="Search products by name, description, or category..."
-                    value={searchQuery}
-                />
-                {searchQuery && (
-                    <div className="search-results-info">
-                        <p>Showing {filteredProducts.length} of {products.length} products</p>
-                    </div>
-                )}
-            </div>
-
             <div className="product-dashboard-content">
                 <div className="add-product-section">
                     <h2>Add New Product</h2>
@@ -321,7 +307,21 @@ const ProductDashboard = ({ token }) => {
                         <button type="submit" className="btn btn-primary">Add Product</button>
                     </form>
                 </div>
-                
+
+                {/* Search Bar */}
+                <div className="search-section">
+                    <SearchBar
+                        onSearch={handleSearch}
+                        placeholder="Search products by name, description, or category..."
+                        value={searchQuery}
+                    />
+                    {searchQuery && (
+                        <div className="search-results-info">
+                            <p>Showing {filteredProducts.length} of {products.length} products</p>
+                        </div>
+                    )}
+                </div>
+
                 <div className="products-table-section">
                     <h2>Existing Products</h2>
                     <div className="products-table-container">
