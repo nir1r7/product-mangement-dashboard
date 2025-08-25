@@ -1,7 +1,5 @@
 const Product = require('../models/Product');
 
-// public access
-// GET /api/products?search=&category=&minPrice=&maxPrice=&page=&limit=&sortBy=&sortOrder=
 const getProducts = async (req, res) => {
     try {
         const {
@@ -62,8 +60,6 @@ const getProducts = async (req, res) => {
     }
 };
 
-// admin access only
-// POST /api/products
 const createProduct = async (req, res) => {
     try {
         const { name, price, description, category, stock } = req.body;
@@ -85,8 +81,6 @@ const createProduct = async (req, res) => {
     }
 };
 
-// admin access only
-// PUT /api/products/:id
 const updateProduct = async (req, res) => {
     try {
         const { name, price, description, category, stock, images } = req.body;
@@ -120,8 +114,6 @@ const updateProduct = async (req, res) => {
     }
 };
 
-// admin access only
-// DELETE /api/products/:id
 const deleteProduct = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -135,8 +127,6 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-// public access
-// GET /api/products/:id
 const getProductById = async (req, res) => {
     try {
         const prod = await Product.findById(req.params.id);

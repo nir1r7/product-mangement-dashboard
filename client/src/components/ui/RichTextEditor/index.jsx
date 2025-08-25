@@ -1,17 +1,53 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './RichTextEditor.css';
 
 const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." }) => {
-    const textareaRef = useRef(null);
+    const editorRef = useRef(null);
     const [isPreview, setIsPreview] = useState(false);
+    const [activeFormats, setActiveFormats] = useState({
+        bold: false,
+        italic: false,
+        underline: false,
+        strikeThrough: false
+    });
 
-    const handleFormat = (command, value = null) => {
-        document.execCommand(command, false, value);
-        textareaRef.current.focus();
+    useEffect(() => {
+        if (editorRef.current && !isPreview && value !== editorRef.current.innerHTML) {
+            editorRef.current.innerHTML = value || '';
+        }
+    }, [value, isPreview]);
+
+    const updateActiveFormats = () => {
+        if (!editorRef.current) return;
+
+        setActiveFormats({
+            bold: document.queryCommandState('bold'),
+            italic: document.queryCommandState('italic'),
+            underline: document.queryCommandState('underline'),
+            strikeThrough: document.queryCommandState('strikeThrough')
+        });
     };
 
-    const handleTextChange = (e) => {
-        onChange(e.target.innerHTML);
+    const handleFormat = (command) => {
+        if (!editorRef.current) return;
+
+        editorRef.current.focus();
+        document.execCommand(command, false, null);
+        updateActiveFormats();
+
+        // Trigger onChange after formatting
+        setTimeout(() => {
+            if (onChange) {
+                onChange(editorRef.current.innerHTML);
+            }
+        }, 0);
+    };
+
+    const handleInput = () => {
+        if (onChange && editorRef.current && !isPreview) {
+            onChange(editorRef.current.innerHTML);
+        }
+        updateActiveFormats();
     };
 
     const handleKeyDown = (e) => {
@@ -36,13 +72,24 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
         }
     };
 
+    const handleSelectionChange = () => {
+        updateActiveFormats();
+    };
+
+    useEffect(() => {
+        document.addEventListener('selectionchange', handleSelectionChange);
+        return () => {
+            document.removeEventListener('selectionchange', handleSelectionChange);
+        };
+    }, []);
+
     return (
         <div className="rich-text-editor">
             <div className="editor-toolbar">
                 <button
                     type="button"
                     onClick={() => handleFormat('bold')}
-                    className="toolbar-btn"
+                    className={`toolbar-btn ${activeFormats.bold ? 'active' : ''}`}
                     title="Bold (Ctrl+B)"
                 >
                     <strong>B</strong>
@@ -50,7 +97,7 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
                 <button
                     type="button"
                     onClick={() => handleFormat('italic')}
-                    className="toolbar-btn"
+                    className={`toolbar-btn ${activeFormats.italic ? 'active' : ''}`}
                     title="Italic (Ctrl+I)"
                 >
                     <em>I</em>
@@ -58,7 +105,7 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
                 <button
                     type="button"
                     onClick={() => handleFormat('underline')}
-                    className="toolbar-btn"
+                    className={`toolbar-btn ${activeFormats.underline ? 'active' : ''}`}
                     title="Underline (Ctrl+U)"
                 >
                     <u>U</u>
@@ -66,7 +113,7 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
                 <button
                     type="button"
                     onClick={() => handleFormat('strikeThrough')}
-                    className="toolbar-btn"
+                    className={`toolbar-btn ${activeFormats.strikeThrough ? 'active' : ''}`}
                     title="Strikethrough"
                 >
                     <s>S</s>
@@ -91,7 +138,13 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
                 <div className="toolbar-separator"></div>
                 <button
                     type="button"
-                    onClick={() => setIsPreview(!isPreview)}
+                    onClick={() => {
+                        // Save current content before toggling
+                        if (!isPreview && editorRef.current && onChange) {
+                            onChange(editorRef.current.innerHTML);
+                        }
+                        setIsPreview(!isPreview);
+                    }}
                     className={`toolbar-btn ${isPreview ? 'active' : ''}`}
                     title="Toggle Preview"
                 >
@@ -102,16 +155,16 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
             {isPreview ? (
                 <div
                     className="editor-preview"
-                    dangerouslySetInnerHTML={{ __html: value }}
+                    dangerouslySetInnerHTML={{ __html: value || '' }}
                 />
             ) : (
                 <div
-                    ref={textareaRef}
+                    ref={editorRef}
                     className="editor-content"
                     contentEditable
-                    onInput={handleTextChange}
+                    onInput={handleInput}
                     onKeyDown={handleKeyDown}
-                    dangerouslySetInnerHTML={{ __html: value }}
+                    suppressContentEditableWarning={true}
                     data-placeholder={placeholder}
                 />
             )}

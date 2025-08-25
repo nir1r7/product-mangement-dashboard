@@ -40,8 +40,10 @@ const ProductDashboard = ({ token }) => {
         const files = Array.from(e.target.files);
         setNewProduct(prev => ({
             ...prev,
-            images: files
+            images: [...prev.images, ...files]
         }));
+        // Clear the input so the same file can be selected again if needed
+        e.target.value = '';
     };
 
     const removeFile = (index) => {
@@ -124,8 +126,10 @@ const ProductDashboard = ({ token }) => {
         const files = Array.from(e.target.files);
         setEditFormData(prev => ({
             ...prev,
-            newImages: files
+            newImages: [...(prev.newImages || []), ...files]
         }));
+        // Clear the input so the same file can be selected again if needed
+        e.target.value = '';
     };
 
     const removeExistingImage = (url) => {

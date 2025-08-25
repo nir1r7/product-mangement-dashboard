@@ -4,7 +4,6 @@ const Product = require('../models/Product');
 const User = require('../models/User');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 
-// POST /api/orders
 const placeOrder = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
