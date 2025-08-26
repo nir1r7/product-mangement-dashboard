@@ -248,3 +248,67 @@
     flex-direction: column;
   }
 }
+
+/* Margin indicators */
+.low-margin {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.normal-margin {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.high-margin {
+  color: #28a745;
+  font-weight: 600;
+}
+
+/* Reviews column styles */
+.reviews-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.rating-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.rating-stars {
+  color: #ffc107;
+  font-size: 0.875rem;
+  letter-spacing: 1px;
+}
+
+.rating-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.no-reviews {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.btn-info {
+  background: var(--accent-primary);
+  color: white;
+  border: 1px solid var(--accent-primary);
+}
+
+.btn-info:hover {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}

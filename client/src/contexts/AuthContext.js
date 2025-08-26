@@ -11,11 +11,8 @@ export const AuthProvider = ({ children }) => {
             try {
                 // Try to decode the token to validate it
                 const decoded = jwtDecode(storedToken);
-                console.log('Valid token found:', decoded);
                 return storedToken;
             } catch (err) {
-                console.error('Invalid token found in localStorage, removing:', err);
-                console.error('Token value:', storedToken);
                 localStorage.removeItem('token');
                 return null;
             }
@@ -36,7 +33,6 @@ export const AuthProvider = ({ children }) => {
                     isAdmin: decoded.role === 'admin'
                 });
             } catch (err) {
-                console.error('Invalid token:', err);
                 localStorage.removeItem('token');
                 setToken(null);
                 setUser(null);

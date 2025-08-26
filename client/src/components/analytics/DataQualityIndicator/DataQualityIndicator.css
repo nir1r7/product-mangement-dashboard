@@ -1,0 +1,88 @@
+﻿/* DataQualityIndicator Component Styles */
+.data-quality-indicator {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    margin-top: 2rem;
+    min-width: 250px;
+}
+
+.data-quality-indicator h3 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.quality-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.quality-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.metric-value {
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.metric-value.excellent {
+    background: var(--accent-tertiary);
+    color: white;
+}
+
+.metric-value.good {
+    background: #4caf50;
+    color: white;
+}
+
+.metric-value.fair {
+    background: #ff9800;
+    color: white;
+}
+
+.metric-value.poor {
+    background: var(--accent-secondary);
+    color: white;
+}
+
+.overall-score {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.score-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.score-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .data-quality-indicator {
+        margin-left: 0;
+        margin-top: 1rem;
+        min-width: auto;
+    }
+}

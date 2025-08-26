@@ -6,11 +6,14 @@ import Login from './components/auth/Login';
 import SignUp from './components/auth/Signup';
 import Profile from './components/auth/Profile';
 import Navbar from './components/layout/Navbar';
+import Breadcrumb from './components/ui/Breadcrumb';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import Cart from './components/cart/Cart';
 import OrderHistory from './components/order/OrderHistory';
 import ProductDashboard from './components/product/ProductDashboard';
 import OrderDashboard from './components/order/OrderDashboard';
 import UserDashboard from './components/auth/UserDashboard';
+import AdminAnalytics from './pages/AdminAnalytics';
 import CheckoutPage from './components/cart/CheckoutPage';
 
 
@@ -30,20 +33,26 @@ function App() {
     return (
         <Router>
             <Navbar onLogout={handleGlobalLogout} />
-            <Routes>
-                <Route path="/" element={<Navigate to="/products" />} />
-                <Route path="/products" element={<ProductList />} />
-                <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/product-dashboard" element={token && user?.isAdmin ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
-                <Route path="/order-dashboard" element={token && user?.isAdmin ? <OrderDashboard token={token} /> : <Navigate to="/" />} />
-                <Route path="/user-dashboard" element={token && user?.isAdmin ? <UserDashboard token={token} /> : <Navigate to="/" />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={token ? <CheckoutPage /> : <Navigate to="/login" />} />
-                <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />
-                <Route path="/my-orders" element={<OrderHistory />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<SignUp />} />
-            </Routes>
+            <div style={{ padding: '0 2rem' }}>
+                <Breadcrumb />
+            </div>
+            <ErrorBoundary>
+                <Routes>
+                    <Route path="/" element={<Navigate to="/products" />} />
+                    <Route path="/products" element={<ProductList />} />
+                    <Route path="/products/:id" element={<ProductDetail />} />
+                    <Route path="/product-dashboard" element={token && user?.isAdmin ? <ProductDashboard token={token} /> : <Navigate to="/" />} />
+                    <Route path="/order-dashboard" element={token && user?.isAdmin ? <OrderDashboard token={token} /> : <Navigate to="/" />} />
+                    <Route path="/user-dashboard" element={token && user?.isAdmin ? <UserDashboard token={token} /> : <Navigate to="/" />} />
+                    <Route path="/analytics" element={token && user?.isAdmin ? <AdminAnalytics /> : <Navigate to="/" />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={token ? <CheckoutPage /> : <Navigate to="/login" />} />
+                    <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />
+                    <Route path="/my-orders" element={<OrderHistory />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUp />} />
+                </Routes>
+            </ErrorBoundary>
         </Router>
     );
 }

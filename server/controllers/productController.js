@@ -1,5 +1,7 @@
 const Product = require('../models/Product');
 
+// public access
+// GET /api/products?search=&category=&minPrice=&maxPrice=&page=&limit=&sortBy=&sortOrder=
 const getProducts = async (req, res) => {
     try {
         const {
@@ -52,7 +54,7 @@ const getProducts = async (req, res) => {
             products,
             total,
             page: Number(page),
-            pages: Math.ceil(total / limit)
+            totalPages: Math.ceil(total / Number(limit))
         });
     } catch (err) {
         console.error('Error in getProducts:', err);
@@ -60,14 +62,17 @@ const getProducts = async (req, res) => {
     }
 };
 
+// admin access only
+// POST /api/products
 const createProduct = async (req, res) => {
     try {
-        const { name, price, description, category, stock } = req.body;
+        const { name, price, cost, description, category, stock } = req.body;
         const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
 
         const product = new Product({
             name,
             price,
+            cost: parseFloat(cost) || 0,
             description,
             category,
             stock,
@@ -81,14 +86,17 @@ const createProduct = async (req, res) => {
     }
 };
 
+// admin access only
+// PUT /api/products/:id
 const updateProduct = async (req, res) => {
     try {
-        const { name, price, description, category, stock, images } = req.body;
+        const { name, price, cost, description, category, stock, images } = req.body;
         const product = await Product.findById(req.params.id);
         if (!product) return res.status(404).json({ message: 'Product not found' });
 
         product.name = name ?? product.name;
         product.price = price ?? product.price;
+        product.cost = cost !== undefined ? parseFloat(cost) || 0 : product.cost;
         product.description = description ?? product.description;
         product.category = category ?? product.category;
         product.stock = stock ?? product.stock;
@@ -114,6 +122,8 @@ const updateProduct = async (req, res) => {
     }
 };
 
+// admin access only
+// DELETE /api/products/:id
 const deleteProduct = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -127,6 +137,8 @@ const deleteProduct = async (req, res) => {
     }
 };
 
+// public access
+// GET /api/products/:id
 const getProductById = async (req, res) => {
     try {
         const prod = await Product.findById(req.params.id);

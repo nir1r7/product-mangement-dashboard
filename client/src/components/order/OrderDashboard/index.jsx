@@ -10,21 +10,47 @@ const OrderDashboard = ({ token }) => {
     const [ignoreCancellations, setIgnoreCancellations] = useState(false);
     const [originalOrders, setOriginalOrders] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalOrders, setTotalOrders] = useState(0);
+    const [dateRange, setDateRange] = useState({
+        from: '',
+        to: ''
+    });
+    const ordersPerPage = 10;
 
     useEffect(() => {
         fetchOrders();
-    }, []);
-
-    useEffect(() => {
-        if (originalOrders.length > 0) {
-            const filteredData = filterOrders(originalOrders, searchQuery);
-            const sortedData = sortOrders(filteredData, sortBy, ignoreCancellations);
-            setOrders(sortedData);
-        }
-    }, [sortBy, ignoreCancellations, originalOrders, searchQuery]);
+    }, [currentPage, sortBy, searchQuery, ignoreCancellations, dateRange]);
 
     const handleSearch = (query) => {
         setSearchQuery(query);
+        setCurrentPage(1); // Reset to first page when searching
+    };
+
+    const handleDateRangeChange = (field, value) => {
+        setDateRange(prev => ({
+            ...prev,
+            [field]: value
+        }));
+        setCurrentPage(1); // Reset to first page when filtering
+    };
+
+    const setQuickDateRange = (days) => {
+        const today = new Date();
+        const fromDate = new Date(today);
+        fromDate.setDate(fromDate.getDate() - days);
+
+        setDateRange({
+            from: fromDate.toISOString().split('T')[0],
+            to: today.toISOString().split('T')[0]
+        });
+        setCurrentPage(1);
+    };
+
+    const clearDateRange = () => {
+        setDateRange({ from: '', to: '' });
+        setCurrentPage(1);
     };
 
     const filterOrders = (ordersToFilter, query) => {
@@ -96,8 +122,27 @@ const OrderDashboard = ({ token }) => {
 
     const fetchOrders = async () => {
         try {
+            setLoading(true);
             setError('');
-            const response = await fetch('http://localhost:5000/api/orders/admin/orders', {
+
+            // Build query parameters
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: ordersPerPage,
+                sortBy: sortBy === 'newest' ? 'createdAt' :
+                       sortBy === 'oldest' ? 'createdAt' :
+                       sortBy === 'least-complete' ? 'status' :
+                       sortBy === 'most-complete' ? 'status' : 'createdAt',
+                sortOrder: sortBy === 'oldest' ? 'asc' :
+                          sortBy === 'least-complete' ? 'asc' : 'desc'
+            });
+
+            if (searchQuery) params.append('search', searchQuery);
+            if (ignoreCancellations) params.append('status', 'Pending,Paid,Shipped,Delivered');
+            if (dateRange.from) params.append('dateFrom', dateRange.from);
+            if (dateRange.to) params.append('dateTo', dateRange.to);
+
+            const response = await fetch(`http://localhost:5000/api/orders/admin/orders?${params}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -110,10 +155,10 @@ const OrderDashboard = ({ token }) => {
 
             const data = await response.json();
             console.log('Orders fetched:', data); // Debug log
-            setOriginalOrders(data);
-            // Apply initial sorting
-            const sortedData = sortOrders(data, sortBy, ignoreCancellations);
-            setOrders(sortedData);
+            setOrders(data.orders || []);
+            setTotalPages(data.totalPages || 1);
+            setTotalOrders(data.total || 0);
+            setOriginalOrders(data.orders || []); // Keep for compatibility
         } catch (error) {
             console.error('Error fetching orders:', error);
             setError(error.message);
@@ -209,6 +254,41 @@ const OrderDashboard = ({ token }) => {
                     />
                 </div>
 
+                <div className="date-range-controls">
+                    <div className="date-inputs">
+                        <label>From:</label>
+                        <input
+                            type="date"
+                            value={dateRange.from}
+                            onChange={(e) => handleDateRangeChange('from', e.target.value)}
+                            className="date-input"
+                        />
+                        <label>To:</label>
+                        <input
+                            type="date"
+                            value={dateRange.to}
+                            onChange={(e) => handleDateRangeChange('to', e.target.value)}
+                            className="date-input"
+                        />
+                        {(dateRange.from || dateRange.to) && (
+                            <button onClick={clearDateRange} className="btn btn-secondary btn-sm">
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                    <div className="quick-date-buttons">
+                        <button onClick={() => setQuickDateRange(7)} className="btn btn-outline btn-sm">
+                            Last 7 days
+                        </button>
+                        <button onClick={() => setQuickDateRange(30)} className="btn btn-outline btn-sm">
+                            Last 30 days
+                        </button>
+                        <button onClick={() => setQuickDateRange(90)} className="btn btn-outline btn-sm">
+                            Last 90 days
+                        </button>
+                    </div>
+                </div>
+
                 <div className="ignore-cancellations">
                     <label className="checkbox-label">
                         <input
@@ -287,6 +367,54 @@ const OrderDashboard = ({ token }) => {
                             ))}
                         </tbody>
                     </table>
+
+                    {totalPages > 1 && (
+                        <div className="pagination">
+                            <div className="pagination-info">
+                                Showing {((currentPage - 1) * ordersPerPage) + 1} to {Math.min(currentPage * ordersPerPage, totalOrders)} of {totalOrders} orders
+                            </div>
+                            <div className="pagination-controls">
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </button>
+
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

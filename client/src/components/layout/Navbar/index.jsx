@@ -82,6 +82,13 @@ const Navbar = () => {
                                             >
                                                 User Dashboard
                                             </Link>
+                                            <Link
+                                                to="/analytics"
+                                                className="admin-dropdown-item"
+                                                onClick={() => setAdminDropdownOpen(false)}
+                                            >
+                                                Analytics
+                                            </Link>
                                         </div>
                                     )}
                                 </div>

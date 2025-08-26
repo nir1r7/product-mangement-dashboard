@@ -1,0 +1,86 @@
+﻿/* CohortHeatmap Component Styles */
+.cohort-heatmap {
+    background: var(--bg-secondary);
+    width: 100%;
+    position: relative;
+}
+
+.cohort-heatmap h2 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.heatmap-container {
+    overflow-x: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+}
+
+.cohort-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.cohort-table th,
+.cohort-table td {
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    font-size: 0.875rem;
+}
+
+.cohort-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cohort-cell {
+    position: relative;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.cohort-cell.high {
+    background: rgba(76, 175, 80, 0.8);
+    color: white;
+}
+
+.cohort-cell.medium {
+    background: rgba(255, 193, 7, 0.8);
+    color: #333;
+}
+
+.cohort-cell.low {
+    background: rgba(244, 67, 54, 0.8);
+    color: white;
+}
+
+.chart-loading,
+.chart-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 1.1rem;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 2px dashed var(--border-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cohort-table th,
+    .cohort-table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+    }
+}

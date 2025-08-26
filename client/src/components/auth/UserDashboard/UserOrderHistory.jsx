@@ -27,12 +27,10 @@ const UserOrderHistory = ({ userId, token, userName }) => {
             }
 
             const data = await response.json();
-            console.log('User orders fetched:', data); // Debug log
             // Sort orders from newest to oldest
             const sortedOrders = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setOrders(sortedOrders);
         } catch (err) {
-            console.error('Error fetching user orders:', err);
             setError(err.message);
         } finally {
             setLoading(false);

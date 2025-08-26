@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SearchBar from '../../ui/SearchBar';
 import RichTextEditor from '../../ui/RichTextEditor';
+import ReviewsModal from '../../ui/ReviewsModal';
 import './ProductDashboard.css';
 
 const ProductDashboard = ({ token }) => {
@@ -12,25 +13,44 @@ const ProductDashboard = ({ token }) => {
     const [newProduct, setNewProduct] = useState({
         name: '',
         price: '',
+        cost: '',
         description: '',
         category: '',
         stock: '',
         images: []
     });
     const [editFormData, setEditFormData] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const productsPerPage = 10;
+    const [showReviewsModal, setShowReviewsModal] = useState(false);
+    const [selectedProductForReviews, setSelectedProductForReviews] = useState(null);
 
     useEffect(() => {
         fetchProducts();
-    }, []);
+    }, [currentPage, searchQuery]);
 
     const fetchProducts = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/products?limit=1000');
+            setLoading(true);
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: productsPerPage,
+                sortBy: 'createdAt',
+                sortOrder: 'desc'
+            });
+
+            if (searchQuery) params.append('search', searchQuery);
+
+            const response = await fetch(`http://localhost:5000/api/products?${params}`);
             if (!response.ok) throw new Error('Failed to fetch products');
             const data = await response.json();
             setProducts(data.products || data);
+            setTotalPages(data.totalPages || 1);
+            setTotalProducts(data.total || 0);
         } catch (error) {
-            console.error('Error fetching products:', error);
+            // Error fetching products
         } finally {
             setLoading(false);
         }
@@ -60,13 +80,8 @@ const ProductDashboard = ({ token }) => {
 
     const handleSearch = (query) => {
         setSearchQuery(query);
+        setCurrentPage(1); // Reset to first page when searching
     };
-
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
 
     const handleAddProduct = async (e) => {
         e.preventDefault();
@@ -74,6 +89,7 @@ const ProductDashboard = ({ token }) => {
         const formData = new FormData();
         formData.append('name', newProduct.name);
         formData.append('price', newProduct.price);
+        formData.append('cost', newProduct.cost || '0');
         formData.append('description', newProduct.description);
         formData.append('category', newProduct.category);
         formData.append('stock', newProduct.stock);
@@ -104,7 +120,6 @@ const ProductDashboard = ({ token }) => {
             });
             clearFileInput();
         } catch (error) {
-            console.error('Error adding product:', error);
             alert('Failed to add product');
         }
     };
@@ -114,6 +129,7 @@ const ProductDashboard = ({ token }) => {
         setEditFormData({
             name: product.name,
             price: product.price,
+            cost: product.cost || 0,
             description: product.description,
             category: product.category,
             stock: product.stock,
@@ -150,6 +166,7 @@ const ProductDashboard = ({ token }) => {
         const formData = new FormData();
         formData.append('name', editFormData.name);
         formData.append('price', editFormData.price);
+        formData.append('cost', editFormData.cost || '0');
         formData.append('description', editFormData.description);
         formData.append('category', editFormData.category);
         formData.append('stock', editFormData.stock);
@@ -174,7 +191,6 @@ const ProductDashboard = ({ token }) => {
             setEditingRowId(null);
             setEditFormData({});
         } catch (error) {
-            console.error('Error updating product:', error);
             alert('Failed to update product');
         }
     };
@@ -196,9 +212,18 @@ const ProductDashboard = ({ token }) => {
 
             await fetchProducts();
         } catch (error) {
-            console.error('Error deleting product:', error);
             alert('Failed to delete product');
         }
+    };
+
+    const handleViewReviews = (productId, productName) => {
+        setSelectedProductForReviews({ id: productId, name: productName });
+        setShowReviewsModal(true);
+    };
+
+    const handleCloseReviewsModal = () => {
+        setShowReviewsModal(false);
+        setSelectedProductForReviews(null);
     };
 
     if (loading) {
@@ -254,6 +279,20 @@ const ProductDashboard = ({ token }) => {
                                     step="0.01"
                                     required
                                 />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="cost" className="form-label">Cost (Optional)</label>
+                                <input
+                                    type="number"
+                                    id="cost"
+                                    value={newProduct.cost}
+                                    onChange={(e) => setNewProduct(prev => ({ ...prev, cost: e.target.value }))}
+                                    className="form-input"
+                                    step="0.01"
+                                    placeholder="Cost to make/acquire this product"
+                                />
+                                <small className="form-help">Used for gross margin calculations in analytics</small>
                             </div>
                         </div>
                         
@@ -333,7 +372,7 @@ const ProductDashboard = ({ token }) => {
                     />
                     {searchQuery && (
                         <div className="search-results-info">
-                            <p>Showing {filteredProducts.length} of {products.length} products</p>
+                            <p>Showing {totalProducts} products matching "{searchQuery}"</p>
                         </div>
                     )}
                 </div>
@@ -347,13 +386,16 @@ const ProductDashboard = ({ token }) => {
                                     <th>Images</th>
                                     <th>Name</th>
                                     <th>Price</th>
+                                    <th>Cost</th>
+                                    <th>Margin</th>
                                     <th>Category</th>
                                     <th>Stock</th>
+                                    <th>Reviews</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredProducts.map(product => (
+                                {products.map(product => (
                                     <tr key={product._id}>
                                         <td>
                                             {editingRowId === product._id ? (
@@ -416,6 +458,32 @@ const ProductDashboard = ({ token }) => {
                                         <td>
                                             {editingRowId === product._id ? (
                                                 <input
+                                                    type="number"
+                                                    value={editFormData.cost || ''}
+                                                    onChange={(e) => setEditFormData(prev => ({ ...prev, cost: e.target.value }))}
+                                                    className="form-input"
+                                                    step="0.01"
+                                                    placeholder="0.00"
+                                                />
+                                            ) : (
+                                                `$${(product.cost || 0).toFixed(2)}`
+                                            )}
+                                        </td>
+                                        <td>
+                                            {(() => {
+                                                const price = editingRowId === product._id ? parseFloat(editFormData.price) || 0 : product.price || 0;
+                                                const cost = editingRowId === product._id ? parseFloat(editFormData.cost) || 0 : product.cost || 0;
+                                                const margin = price > 0 ? ((price - cost) / price * 100) : 0;
+                                                return (
+                                                    <span className={margin < 20 ? 'low-margin' : margin > 50 ? 'high-margin' : 'normal-margin'}>
+                                                        {margin.toFixed(1)}%
+                                                    </span>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td>
+                                            {editingRowId === product._id ? (
+                                                <input
                                                     type="text"
                                                     value={editFormData.category}
                                                     onChange={(e) => setEditFormData(prev => ({ ...prev, category: e.target.value }))}
@@ -438,6 +506,31 @@ const ProductDashboard = ({ token }) => {
                                             )}
                                         </td>
                                         <td>
+                                            <div className="reviews-info">
+                                                <div className="rating-display">
+                                                    {product.reviewStats?.averageRating > 0 ? (
+                                                        <>
+                                                            <span className="rating-stars">
+                                                                {'★'.repeat(Math.round(product.reviewStats.averageRating))}
+                                                                {'☆'.repeat(5 - Math.round(product.reviewStats.averageRating))}
+                                                            </span>
+                                                            <span className="rating-text">
+                                                                {product.reviewStats.averageRating.toFixed(1)} ({product.reviewStats.totalReviews})
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="no-reviews">No reviews</span>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    onClick={() => handleViewReviews(product._id, product.name)}
+                                                    className="btn btn-info btn-sm"
+                                                >
+                                                    View Reviews
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
                                             {editingRowId === product._id ? (
                                                 <div className="action-buttons">
                                                     <button onClick={() => handleSaveEdit(product._id)} className="btn btn-success">Save</button>
@@ -454,9 +547,65 @@ const ProductDashboard = ({ token }) => {
                                 ))}
                             </tbody>
                         </table>
+
+                        {totalPages > 1 && (
+                            <div className="pagination">
+                                <div className="pagination-info">
+                                    Showing {((currentPage - 1) * productsPerPage) + 1} to {Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
+                                </div>
+                                <div className="pagination-controls">
+                                    <button
+                                        className="pagination-btn"
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Previous
+                                    </button>
+
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        let pageNum;
+                                        if (totalPages <= 5) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage <= 3) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage >= totalPages - 2) {
+                                            pageNum = totalPages - 4 + i;
+                                        } else {
+                                            pageNum = currentPage - 2 + i;
+                                        }
+
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+
+                                    <button
+                                        className="pagination-btn"
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Reviews Modal */}
+            <ReviewsModal
+                isOpen={showReviewsModal}
+                onClose={handleCloseReviewsModal}
+                productId={selectedProductForReviews?.id}
+                productName={selectedProductForReviews?.name}
+            />
         </div>
     );
 };

@@ -4,6 +4,7 @@ const Product = require('../models/Product');
 const User = require('../models/User');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 
+// POST /api/orders
 const placeOrder = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -82,7 +83,6 @@ const placeOrder = async (req, res) => {
         .populate('items.product', 'name price')
         .populate('user', 'name email');
 
-        // Send order confirmation email (don't wait for it to complete)
         sendOrderConfirmationEmail(populatedOrder.user.email, populatedOrder, populatedOrder.user).catch(err => {
             console.error('Failed to send order confirmation email:', err);
         });
@@ -106,10 +106,72 @@ const getUserOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.find()
-        .populate('user', 'name email')
-        .populate('items.product', 'name price');
-        res.json(orders);
+        const {
+            page = 1,
+            limit = 10,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+            status,
+            search,
+            dateFrom,
+            dateTo
+        } = req.query;
+
+        let query = {};
+
+        // Filter by status if provided
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        // Filter by date range if provided
+        if (dateFrom || dateTo) {
+            query.createdAt = {};
+            if (dateFrom) {
+                query.createdAt.$gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                // Add one day to include the entire end date
+                const endDate = new Date(dateTo);
+                endDate.setDate(endDate.getDate() + 1);
+                query.createdAt.$lt = endDate;
+            }
+        }
+
+        // Search functionality
+        if (search) {
+            const users = await User.find({
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+
+            const userIds = users.map(user => user._id);
+
+            query.$or = [
+                { user: { $in: userIds } },
+                { _id: mongoose.Types.ObjectId.isValid(search) ? search : null }
+            ].filter(Boolean);
+        }
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+        const total = await Order.countDocuments(query);
+        const orders = await Order.find(query)
+            .populate('user', 'name email')
+            .populate('items.product', 'name price')
+            .sort(sort)
+            .skip(skip)
+            .limit(Number(limit));
+
+        res.json({
+            orders,
+            total,
+            page: Number(page),
+            totalPages: Math.ceil(total / Number(limit))
+        });
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch all orders', error: error.message });
     }
@@ -128,7 +190,6 @@ const updateStatus = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Send status update email (don't wait for it to complete)
         sendOrderStatusUpdateEmail(order.user.email, order, order.user, status).catch(err => {
             console.error('Failed to send order status update email:', err);
         });

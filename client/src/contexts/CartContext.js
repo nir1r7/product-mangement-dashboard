@@ -28,7 +28,7 @@ export const CartProvider = ({ children }) => {
                 return serverCart;
             }
         } catch (err) {
-            console.error('Fetch user cart failed:', err);
+            // Fetch user cart failed
         }
         return [];
     }, [token]);
@@ -91,7 +91,7 @@ export const CartProvider = ({ children }) => {
             const updatedCart = await fetchUserCart();
             setCartItems(updatedCart);
         } catch (err) {
-            console.error('Sync cart to backend failed:', err);
+            // Sync cart to backend failed
         }
     }, [token, fetchUserCart]);
 
@@ -157,7 +157,7 @@ export const CartProvider = ({ children }) => {
                     }),
                 });
             } catch (err) {
-                console.error('Failed to add to backend cart:', err);
+                // Failed to add to backend cart
             }
         }
 
@@ -178,7 +178,7 @@ export const CartProvider = ({ children }) => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             } catch (err) {
-                console.error('Failed to remove from backend cart:', err);
+                // Failed to remove from backend cart
             }
         }
     };
@@ -194,7 +194,7 @@ export const CartProvider = ({ children }) => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             } catch (err) {
-                console.error('Failed to clear backend cart:', err);
+                // Failed to clear backend cart
             }
         }
     };
@@ -219,7 +219,7 @@ export const CartProvider = ({ children }) => {
                     body: JSON.stringify({ quantity: newQuantity }),
                 });
             } catch (err) {
-                console.error('Failed to update backend cart quantity:', err);
+                // Failed to update backend cart quantity
             }
         } else {
             saveLocalCart(updatedCart);

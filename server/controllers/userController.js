@@ -4,8 +4,46 @@ const { protect, isAdmin } = require('../middleware/authMiddleware');
 
 const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find().select('-password');
-        res.json(users);
+        const {
+            page = 1,
+            limit = 10,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+            search,
+            role
+        } = req.query;
+
+        let query = {};
+
+        // Filter by role if provided
+        if (role && role !== 'all') {
+            query.role = role;
+        }
+
+        // Search functionality
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+        const total = await User.countDocuments(query);
+        const users = await User.find(query)
+            .select('-password')
+            .sort(sort)
+            .skip(skip)
+            .limit(Number(limit));
+
+        res.json({
+            users,
+            total,
+            page: Number(page),
+            totalPages: Math.ceil(total / Number(limit))
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

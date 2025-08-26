@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UserOrderHistory from './UserOrderHistory';
 import SearchBar from '../../ui/SearchBar';
+import NotesModal from './NotesModal';
 import './UserDashboard.css';
 
 const UserDashboard = ({ token }) => {
@@ -9,25 +10,45 @@ const UserDashboard = ({ token }) => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [showOrderHistory, setShowOrderHistory] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showNotesModal, setShowNotesModal] = useState(false);
+    const [notesUser, setNotesUser] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalUsers, setTotalUsers] = useState(0);
+    const usersPerPage = 10;
 
     useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [currentPage, searchQuery]);
 
     const fetchUsers = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/users', {
+            setLoading(true);
+
+            // Build query parameters
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: usersPerPage,
+                sortBy: 'createdAt',
+                sortOrder: 'desc'
+            });
+
+            if (searchQuery) params.append('search', searchQuery);
+
+            const response = await fetch(`http://localhost:5000/api/users?${params}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) throw new Error('Failed to fetch users');
-            
+
             const data = await response.json();
-            setUsers(data);
+            setUsers(data.users || []);
+            setTotalPages(data.totalPages || 1);
+            setTotalUsers(data.total || 0);
         } catch (error) {
-            console.error('Error fetching users:', error);
+            // Error fetching users - silently handle
         } finally {
             setLoading(false);
         }
@@ -51,7 +72,6 @@ const UserDashboard = ({ token }) => {
 
             await fetchUsers();
         } catch (error) {
-            console.error('Error updating user:', error);
             alert(`Failed to update user role: ${error.message}`);
         }
     };
@@ -82,7 +102,6 @@ const UserDashboard = ({ token }) => {
             alert(result.message || 'User deleted successfully');
             await fetchUsers();
         } catch (error) {
-            console.error('Error deleting user:', error);
             alert(`Failed to delete user: ${error.message}`);
         }
     };
@@ -97,15 +116,31 @@ const UserDashboard = ({ token }) => {
         setSelectedUser(null);
     };
 
-    const handleSearch = (query) => {
-        setSearchQuery(query);
+    const handleEditNotes = (user) => {
+        setNotesUser(user);
+        setShowNotesModal(true);
     };
 
-    const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.role.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const handleCloseNotesModal = () => {
+        setShowNotesModal(false);
+        setNotesUser(null);
+    };
+
+    const handleSaveNotes = (userId, notesContent) => {
+        // Update the user in the local state
+        setUsers(prevUsers =>
+            prevUsers.map(user =>
+                user._id === userId
+                    ? { ...user, notes: notesContent }
+                    : user
+            )
+        );
+    };
+
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        setCurrentPage(1); // Reset to first page when searching
+    };
 
     if (loading) {
         return (
@@ -131,7 +166,7 @@ const UserDashboard = ({ token }) => {
                 />
                 {searchQuery && (
                     <div className="search-results-info">
-                        <p>Showing {filteredUsers.length} of {users.length} users</p>
+                        <p>Showing {totalUsers} users matching "{searchQuery}"</p>
                     </div>
                 )}
             </div>
@@ -144,11 +179,12 @@ const UserDashboard = ({ token }) => {
                             <th>Email</th>
                             <th>Role</th>
                             <th>Orders</th>
+                            <th>Notes</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredUsers.map(user => (
+                        {users.map(user => (
                             <tr key={user._id}>
                                 <td>{user.name}</td>
                                 <td>{user.email}</td>
@@ -164,6 +200,26 @@ const UserDashboard = ({ token }) => {
                                     >
                                         View Orders
                                     </button>
+                                </td>
+                                <td className="notes-column">
+                                    <div className="notes-display">
+                                        <div
+                                            className="notes-preview"
+                                            dangerouslySetInnerHTML={{
+                                                __html: user.notes
+                                                    ? (user.notes.length > 50
+                                                        ? user.notes.substring(0, 50) + '...'
+                                                        : user.notes)
+                                                    : '<em>No notes</em>'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => handleEditNotes(user)}
+                                            className="btn btn-outline btn-sm"
+                                        >
+                                            {user.notes ? 'Edit Notes' : 'Add Notes'}
+                                        </button>
+                                    </div>
                                 </td>
                                 <td>
                                     <div className="user-actions">
@@ -187,6 +243,54 @@ const UserDashboard = ({ token }) => {
                         ))}
                     </tbody>
                 </table>
+
+                {totalPages > 1 && (
+                    <div className="pagination">
+                        <div className="pagination-info">
+                            Showing {((currentPage - 1) * usersPerPage) + 1} to {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers} users
+                        </div>
+                        <div className="pagination-controls">
+                            <button
+                                className="pagination-btn"
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </button>
+
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                className="pagination-btn"
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Order History Modal */}
@@ -212,6 +316,15 @@ const UserDashboard = ({ token }) => {
                     </div>
                 </div>
             )}
+
+            {/* Notes Modal */}
+            <NotesModal
+                isOpen={showNotesModal}
+                onClose={handleCloseNotesModal}
+                user={notesUser}
+                token={token}
+                onSave={handleSaveNotes}
+            />
         </div>
     );
 };

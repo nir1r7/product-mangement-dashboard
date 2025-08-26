@@ -1,0 +1,114 @@
+﻿/* PerformanceMonitor Component Styles */
+.performance-monitor {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-light);
+    width: 100%;
+}
+
+.performance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.performance-header h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.performance-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.performance-status.excellent {
+    background: var(--accent-tertiary);
+    color: white;
+}
+
+.performance-status.good {
+    background: #28a745;
+    color: white;
+}
+
+.performance-status.fair {
+    background: #ffc107;
+    color: #333;
+}   
+
+.performance-status.poor {
+    background: var(--accent-secondary);
+    color: white;
+}
+
+.performance-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.performance-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.performance-metric:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.performance-metric .metric-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.performance-metric .metric-value {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.performance-metric .metric-value.error {
+    color: var(--accent-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .performance-monitor {
+        padding: 1.5rem;
+    }
+
+    .performance-metrics {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .performance-metric {
+        padding: 1rem;
+    }
+
+    .performance-metric .metric-value {
+        font-size: 1.25rem;
+    }
+}

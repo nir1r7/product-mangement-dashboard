@@ -12,18 +12,43 @@ const ProductList = () => {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [priceRange, setPriceRange] = useState([0, 100000]);
     const [showFilters, setShowFilters] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const productsPerPage = 12;
 
     useEffect(() => {
         fetchProducts();
-    }, []);
+    }, [currentPage, searchQuery, selectedCategory, sortBy]);
 
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/products');
+
+            // Build query parameters
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: productsPerPage,
+                sortBy: sortBy === 'newest' ? 'createdAt' :
+                       sortBy === 'oldest' ? 'createdAt' :
+                       sortBy === 'price-low' ? 'price' :
+                       sortBy === 'price-high' ? 'price' : 'createdAt',
+                sortOrder: sortBy === 'oldest' ? 'asc' :
+                          sortBy === 'price-low' ? 'asc' : 'desc'
+            });
+
+            if (searchQuery) params.append('search', searchQuery);
+            if (selectedCategory) params.append('category', selectedCategory);
+            if (priceRange[0] > 0) params.append('minPrice', priceRange[0]);
+            if (priceRange[1] < 100000) params.append('maxPrice', priceRange[1]);
+
+            const response = await fetch(`http://localhost:5000/api/products?${params}`);
             if (!response.ok) throw new Error('Failed to fetch products');
             const data = await response.json();
+
             setProducts(data.products || []);
+            setTotalPages(data.totalPages || 1);
+            setTotalProducts(data.total || 0);
         } catch (error) {
             setError(error.message);
         } finally {
@@ -33,56 +58,26 @@ const ProductList = () => {
 
     const handleSearch = (query) => {
         setSearchQuery(query);
+        setCurrentPage(1); // Reset to first page when searching
     };
 
     const handleSortChange = (sortType) => {
         setSortBy(sortType);
+        setCurrentPage(1); // Reset to first page when sorting
     };
 
     const handleCategoryChange = (category) => {
         setSelectedCategory(category);
+        setCurrentPage(1); // Reset to first page when filtering
     };
 
     const handlePriceRangeChange = (range) => {
         setPriceRange(range);
+        setCurrentPage(1); // Reset to first page when filtering
     };
 
-    const categories = [...new Set(products.map(product => product.category))];
-
-    const filteredProducts = products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            product.category.toLowerCase().includes(searchQuery.toLowerCase());
-
-        const matchesCategory = !selectedCategory || product.category === selectedCategory;
-        const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-
-        return matchesSearch && matchesCategory && matchesPrice;
-    });
-
-    // Sort products
-    const sortedProducts = [...filteredProducts].sort((a, b) => {
-        switch (sortBy) {
-            case 'price-low':
-                return a.price - b.price;
-            case 'price-high':
-                return b.price - a.price;
-            case 'name-asc':
-                return a.name.localeCompare(b.name);
-            case 'name-desc':
-                return b.name.localeCompare(a.name);
-            case 'rating-high':
-                return (b.reviewStats?.averageRating || 0) - (a.reviewStats?.averageRating || 0);
-            case 'rating-low':
-                return (a.reviewStats?.averageRating || 0) - (b.reviewStats?.averageRating || 0);
-            case 'newest':
-                return new Date(b.createdAt) - new Date(a.createdAt);
-            case 'oldest':
-                return new Date(a.createdAt) - new Date(b.createdAt);
-            default:
-                return 0;
-        }
-    });
+    // Static categories list (server-side filtering handles the actual filtering)
+    const categories = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports', 'Beauty', 'Toys'];
 
     if (loading) {
         return (
@@ -130,7 +125,7 @@ const ProductList = () => {
                         />
 
                         <div className="results-count">
-                            {sortedProducts.length} product{sortedProducts.length !== 1 ? 's' : ''} found
+                            {totalProducts} product{totalProducts !== 1 ? 's' : ''} found
                         </div>
                     </div>
 
@@ -222,17 +217,67 @@ const ProductList = () => {
                 </div>
             </div>
 
-            {sortedProducts.length === 0 ? (
+            {products.length === 0 ? (
                 <div className="no-products">
                     <h3>No products found</h3>
                     <p>Try adjusting your search terms or filters.</p>
                 </div>
             ) : (
-                <div className="product-grid">
-                    {sortedProducts.map(product => (
-                        <ProductCard key={product._id} product={product} />
-                    ))}
-                </div>
+                <>
+                    <div className="product-grid">
+                        {products.map(product => (
+                            <ProductCard key={product._id} product={product} />
+                        ))}
+                    </div>
+
+                    {totalPages > 1 && (
+                        <div className="pagination">
+                            <div className="pagination-info">
+                                Showing {((currentPage - 1) * productsPerPage) + 1} to {Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
+                            </div>
+                            <div className="pagination-controls">
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </button>
+
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
