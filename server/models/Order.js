@@ -33,4 +33,15 @@ const orderSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+orderSchema.index({ createdAt: -1 });                 // newest/oldest
+orderSchema.index({ totalPrice: -1, createdAt: -1 }); // expensive/cheap with tiebreaker
+orderSchema.index({ status: 1, createdAt: -1 });      // status-based filters & sorts
+orderSchema.index({ user: 1, createdAt: -1 });        // user history & search joins
+orderSchema.index({
+  'shippingAddress.fullName': 1,
+  'shippingAddress.city': 1,
+  'shippingAddress.province': 1,
+  'shippingAddress.postalCode': 1
+});
+
 module.exports = mongoose.model('Order', orderSchema);
