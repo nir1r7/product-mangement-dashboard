@@ -42,7 +42,14 @@ const getProducts = async (req, res) => {
         }
 
         const skip = (Number(page) - 1) * Number(limit);
-        const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+        
+        let sortField = sortBy;
+        if (sortBy === 'name') sortField = 'name';
+        if (sortBy === 'reviewStats.averageRating') sortField = 'reviewStats.averageRating';
+        if (sortBy === 'price') sortField = 'price';
+        if (sortBy === 'createdAt') sortField = 'createdAt';
+
+        const sort = { [sortField]: sortOrder === 'asc' ? 1 : -1 };
 
         const total = await Product.countDocuments(query);
         const products = await Product.find(query)

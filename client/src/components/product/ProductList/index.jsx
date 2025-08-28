@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from '../ProductCard';
 import SearchBar from '../../ui/SearchBar';
 import './ProductList.css';
@@ -10,37 +10,83 @@ const ProductList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('newest');
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [priceRange, setPriceRange] = useState([0, 100000]);
+    const [priceRange, setPriceRange] = useState([0, 2000]);
+    const [debouncedPriceRange, setDebouncedPriceRange] = useState(priceRange);
+    const debounceTimeout = useRef(null);
     const [showFilters, setShowFilters] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
     const productsPerPage = 12;
 
+    // 🔑 Trigger fetch only after debounce settles
     useEffect(() => {
         fetchProducts();
-    }, [currentPage, searchQuery, selectedCategory, sortBy]);
+    }, [currentPage, searchQuery, selectedCategory, sortBy, debouncedPriceRange]);
+
+    const handlePriceChange = (values) => {
+        setPriceRange(values);
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+
+        debounceTimeout.current = setTimeout(() => {
+            setDebouncedPriceRange(values);
+            setCurrentPage(1);
+        }, 500); // wait for user to pause
+    };
 
     const fetchProducts = async () => {
         try {
             setLoading(true);
 
-            // Build query parameters
+            // 🔑 Map sort options consistently
+            let sortField = 'createdAt';
+            let sortOrder = 'desc';
+
+            switch (sortBy) {
+                case 'oldest':
+                    sortField = 'createdAt';
+                    sortOrder = 'asc';
+                    break;
+                case 'price-low':
+                    sortField = 'price';
+                    sortOrder = 'asc';
+                    break;
+                case 'price-high':
+                    sortField = 'price';
+                    sortOrder = 'desc';
+                    break;
+                case 'rating-high':
+                    sortField = 'reviewStats.averageRating';
+                    sortOrder = 'desc';
+                    break;
+                case 'rating-low':
+                    sortField = 'reviewStats.averageRating';
+                    sortOrder = 'asc';
+                    break;
+                case 'name-asc':
+                    sortField = 'name';
+                    sortOrder = 'asc';
+                    break;
+                case 'name-desc':
+                    sortField = 'name';
+                    sortOrder = 'desc';
+                    break;
+                default:
+                    sortField = 'createdAt';
+                    sortOrder = 'desc';
+            }
+
             const params = new URLSearchParams({
+                minPrice: debouncedPriceRange[0],
+                maxPrice: debouncedPriceRange[1],
                 page: currentPage,
                 limit: productsPerPage,
-                sortBy: sortBy === 'newest' ? 'createdAt' :
-                       sortBy === 'oldest' ? 'createdAt' :
-                       sortBy === 'price-low' ? 'price' :
-                       sortBy === 'price-high' ? 'price' : 'createdAt',
-                sortOrder: sortBy === 'oldest' ? 'asc' :
-                          sortBy === 'price-low' ? 'asc' : 'desc'
+                sortBy: sortField,
+                sortOrder
             });
 
             if (searchQuery) params.append('search', searchQuery);
             if (selectedCategory) params.append('category', selectedCategory);
-            if (priceRange[0] > 0) params.append('minPrice', priceRange[0]);
-            if (priceRange[1] < 100000) params.append('maxPrice', priceRange[1]);
 
             const response = await fetch(`http://localhost:5000/api/products?${params}`);
             if (!response.ok) throw new Error('Failed to fetch products');
@@ -58,25 +104,28 @@ const ProductList = () => {
 
     const handleSearch = (query) => {
         setSearchQuery(query);
-        setCurrentPage(1); // Reset to first page when searching
+        setCurrentPage(1);
     };
 
     const handleSortChange = (sortType) => {
         setSortBy(sortType);
-        setCurrentPage(1); // Reset to first page when sorting
+        setCurrentPage(1);
     };
 
     const handleCategoryChange = (category) => {
         setSelectedCategory(category);
-        setCurrentPage(1); // Reset to first page when filtering
+        setCurrentPage(1);
     };
 
-    const handlePriceRangeChange = (range) => {
-        setPriceRange(range);
-        setCurrentPage(1); // Reset to first page when filtering
+    const clearFilters = () => {
+        setSearchQuery('');
+        setSelectedCategory('');
+        setPriceRange([0, 2000]);
+        setDebouncedPriceRange([0, 2000]);
+        setSortBy('newest');
+        setCurrentPage(1);
     };
 
-    // Static categories list (server-side filtering handles the actual filtering)
     const categories = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports', 'Beauty', 'Toys'];
 
     if (loading) {
@@ -164,17 +213,17 @@ const ProductList = () => {
                                         <input
                                             type="range"
                                             min="0"
-                                            max="100000"
+                                            max="2000"
                                             value={priceRange[0]}
-                                            onChange={(e) => handlePriceRangeChange([parseInt(e.target.value), priceRange[1]])}
+                                            onChange={(e) => handlePriceChange([parseInt(e.target.value), priceRange[1]])}
                                             className="price-slider"
                                         />
                                         <input
                                             type="range"
                                             min="0"
-                                            max="100000"
+                                            max="2000"
                                             value={priceRange[1]}
-                                            onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value)])}
+                                            onChange={(e) => handlePriceChange([priceRange[0], parseInt(e.target.value)])}
                                             className="price-slider"
                                         />
                                     </div>
@@ -182,7 +231,7 @@ const ProductList = () => {
                                         <input
                                             type="number"
                                             value={priceRange[0]}
-                                            onChange={(e) => handlePriceRangeChange([parseInt(e.target.value) || 0, priceRange[1]])}
+                                            onChange={(e) => handlePriceChange([parseInt(e.target.value) || 0, priceRange[1]])}
                                             placeholder="Min"
                                             className="price-input"
                                         />
@@ -190,7 +239,7 @@ const ProductList = () => {
                                         <input
                                             type="number"
                                             value={priceRange[1]}
-                                            onChange={(e) => handlePriceRangeChange([priceRange[0], parseInt(e.target.value) || 100000])}
+                                            onChange={(e) => handlePriceChange([priceRange[0], parseInt(e.target.value) || 100000])}
                                             placeholder="Max"
                                             className="price-input"
                                         />
@@ -201,12 +250,7 @@ const ProductList = () => {
                                     <label>&nbsp;</label>
                                     <button
                                         className="clear-filters-btn"
-                                        onClick={() => {
-                                            setSearchQuery('');
-                                            setSelectedCategory('');
-                                            setPriceRange([0, 100000]);
-                                            setSortBy('newest');
-                                        }}
+                                        onClick={clearFilters}
                                     >
                                         Clear All Filters
                                     </button>
