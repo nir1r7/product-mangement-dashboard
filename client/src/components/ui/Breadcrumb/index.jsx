@@ -27,7 +27,7 @@ const Breadcrumb = () => {
     };
 
     useEffect(() => {
-        const match = location.pathname.match(/\/products\/(\d+)/);
+        const match = location.pathname.match(/\/products\/([^/]+)/);
         if (match) {
             const productId = match[1];
 
@@ -66,7 +66,7 @@ const Breadcrumb = () => {
     }, [location.pathname]);
 
     const getBreadcrumbName = (pathname, index) => {
-        if (index > 0 && pathnames[index - 1] === 'products' && !isNaN(pathname)) {
+        if (index > 0 && pathnames[index - 1] === 'products') {
             return productNames[pathname] || `Loading...`;
         }
         return breadcrumbNameMap[pathname] || pathname.charAt(0).toUpperCase() + pathname.slice(1);
